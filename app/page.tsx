@@ -1653,6 +1653,7 @@ export default function Page() {
     frameRef.current = nextFrame;
     setTitle(typeof next.title === "string" ? next.title : "");
     setBrief(typeof next.brief === "string" ? next.brief : "");
+    setPromptEdit(typeof next.promptEdit === "string" ? next.promptEdit : undefined);
     setSelectedIds([]);
     setSelectedFrameId(null);
     setSelectedLinkId(null);

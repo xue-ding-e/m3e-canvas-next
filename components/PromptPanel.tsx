@@ -13,6 +13,15 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isProject = (value: unknown): value is Doc => {
   if (!isRecord(value) || !Array.isArray(value.groups) || !Array.isArray(value.frames)) return false;
   const kinds = new Set<Kind>(KIND_ORDER);
+  const validTabs = (tabs: unknown) =>
+    tabs === undefined ||
+    (Array.isArray(tabs) &&
+      tabs.every(
+        (tab) =>
+          isRecord(tab) &&
+          typeof tab.label === "string" &&
+          typeof tab.icon === "string",
+      ));
   const validItem = (item: unknown) =>
     isRecord(item) &&
     typeof item.id === "string" &&
@@ -20,7 +29,10 @@ const isProject = (value: unknown): value is Doc => {
     kinds.has(item.kind as Kind) &&
     typeof item.label === "string" &&
     (typeof item.icon === "string" || item.icon === null) &&
-    typeof item.variant === "string";
+    typeof item.variant === "string" &&
+    (item.supporting === undefined || typeof item.supporting === "string") &&
+    (item.note === undefined || typeof item.note === "string") &&
+    validTabs(item.tabs);
   const validGroup = (group: unknown) =>
     isRecord(group) &&
     typeof group.id === "string" &&
@@ -28,13 +40,15 @@ const isProject = (value: unknown): value is Doc => {
     Number.isFinite(group.y) &&
     (group.axis === "x" || group.axis === "y") &&
     Array.isArray(group.items) &&
+    group.items.length > 0 &&
     group.items.every(validItem);
   const validFrame = (frame: unknown) =>
     isRecord(frame) &&
     typeof frame.id === "string" &&
     typeof frame.name === "string" &&
     Number.isFinite(frame.x) &&
-    Number.isFinite(frame.y);
+    Number.isFinite(frame.y) &&
+    (frame.note === undefined || typeof frame.note === "string");
   return value.groups.every(validGroup) && value.frames.every(validFrame);
 };
 
