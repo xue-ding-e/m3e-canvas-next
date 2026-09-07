@@ -29,7 +29,6 @@ import {
   TRACK_MIN,
   maxRingThickness,
   progressThickness,
-  baseRadii,
   contentWidth,
   defaultTabsFor,
   framePresetOf,
@@ -1385,7 +1384,7 @@ export function Inspector({
                 <Slider
                   iconNode={<CornerIcon side={item.kind === "navRail" ? "left" : "top"} />}
                   title={t(item.kind === "navRail" ? "cornerLeft" : "cornerTop", lang)}
-                  value={item.kind === "navRail" ? baseRadii(item).tl : (item.radiusTop ?? 0)}
+                  value={item.radiusTop ?? 0}
                   min={0}
                   max={40}
                   step={1}
@@ -1395,7 +1394,7 @@ export function Inspector({
                 <Slider
                   iconNode={<CornerIcon side={item.kind === "navRail" ? "right" : "bottom"} />}
                   title={t(item.kind === "navRail" ? "cornerRight" : "cornerBottom", lang)}
-                  value={item.kind === "navRail" ? baseRadii(item).tr : (item.radiusBottom ?? 0)}
+                  value={item.radiusBottom ?? 0}
                   min={0}
                   max={40}
                   step={1}

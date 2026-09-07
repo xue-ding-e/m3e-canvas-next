@@ -132,16 +132,6 @@ describe("projectFileName", () => {
 });
 
 describe("readProject", () => {
-  it.each([undefined, 2, 4, 8, 16])("preserves progress thickness %s in project files", async (trackThickness) => {
-    const value = withItem({ kind: "linearProgress", wavy: true, trackThickness });
-    await expect(readProject(new File([JSON.stringify(value)], "progress.json"))).resolves.toEqual(value);
-  });
-
-  it.each([0, 1, 17, 4.5, -8, "8", null])("rejects invalid progress thickness %j", async (trackThickness) => {
-    const value = withItem({ kind: "circularProgress", trackThickness });
-    await expect(readProject(new File([JSON.stringify(value)], "progress.json"))).resolves.toBeNull();
-  });
-
   it.each(["left", "right"])("does not persist the runtime %s expansion edge", async (side) => {
     const authored: Item = { ...item(), kind: "navRail", railExpanded: false, railModal: true, size2: 800,
       selected: 1, tabs: [{ icon: "home", label: "Home" }, { icon: "star", label: "Saved" }], note: "Keep my destinations",
@@ -172,6 +162,16 @@ describe("readProject", () => {
     for (const value of [null, 0, 1, "true", "false", {}, []]) {
       expect(isProject(withItem({ kind: "navRail", [field]: value }))).toBe(false);
     }
+  });
+
+  it.each([undefined, 2, 4, 8, 16])("preserves progress thickness %s in project files", async (trackThickness) => {
+    const value = withItem({ kind: "linearProgress", wavy: true, trackThickness });
+    await expect(readProject(new File([JSON.stringify(value)], "progress.json"))).resolves.toEqual(value);
+  });
+
+  it.each([0, 1, 17, 4.5, -8, "8", null])("rejects invalid progress thickness %j", async (trackThickness) => {
+    const value = withItem({ kind: "circularProgress", trackThickness });
+    await expect(readProject(new File([JSON.stringify(value)], "progress.json"))).resolves.toBeNull();
   });
 
   it("reads a real File as JSON without relying on its name or MIME type", async () => {

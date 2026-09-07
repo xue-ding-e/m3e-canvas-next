@@ -16,9 +16,9 @@ const validCorners = (c: unknown) => c === undefined || (isRecord(c) && ["tl", "
 const validItem = (item: unknown) =>
   isRecord(item) &&
   validCorners(item.corners) &&
-  (item.trackThickness === undefined || isTrackThickness(item.trackThickness)) &&
   (item.railExpanded === undefined || typeof item.railExpanded === "boolean") &&
   (item.railModal === undefined || typeof item.railModal === "boolean") &&
+  (item.trackThickness === undefined || isTrackThickness(item.trackThickness)) &&
   typeof item.id === "string" &&
   typeof item.kind === "string" &&
   KINDS.has(item.kind as Kind) &&

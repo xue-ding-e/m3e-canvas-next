@@ -27,8 +27,8 @@ import {
   isWideRail,
   normalizeTheme,
   paletteOf,
-  progressThickness,
   railWidth,
+  progressThickness,
 } from "./tokens";
 
 const VARIANT_TEXT: Record<Lang, Record<Variant, string>> = {

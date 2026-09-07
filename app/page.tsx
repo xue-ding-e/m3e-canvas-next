@@ -594,6 +594,8 @@ export default function Page() {
   /** Puts a stored or opened document into the editor. Fields a partial document
    *  leaves out keep their current value, or go back to the default when `reset`. */
   const applyDoc = (doc: Partial<Doc>, reset: boolean) => {
+    setPreviewId(null);
+    viewBeforePreview.current = null;
     const frames = Array.isArray(doc.frames) ? doc.frames : framesRef.current;
     if (Array.isArray(doc.groups)) setGroups(migrateGroups(doc.groups, frames));
     if (Array.isArray(doc.frames)) setFrames(doc.frames);

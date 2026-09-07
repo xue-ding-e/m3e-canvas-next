@@ -1185,13 +1185,13 @@ export type Item = {
   /** 0..100 for sliders and determinate progress; undefined = indeterminate */
   value?: number;
   wavy?: boolean;
-  /** Progress track thickness in dp (TRACK_MIN..TRACK_MAX); omitted uses the standard 4dp stroke. */
-  trackThickness?: number;
   /** Undefined retains the original rail; false/true select the collapsed/expanded expressive rail. */
   railExpanded?: boolean;
   /** Expanded rail overlays a scrim rather than taking additional layout space. */
   railModal?: boolean;
   [railExpansionSide]?: "left" | "right";
+  /** Progress track thickness in dp (TRACK_MIN..TRACK_MAX); omitted uses the standard 4dp stroke. */
+  trackThickness?: number;
   contained?: boolean;
   /** free text the author writes about what this part does */
   note?: string;
