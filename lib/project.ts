@@ -19,7 +19,6 @@ const validItem = (item: unknown) =>
   (item.trackThickness === undefined || isTrackThickness(item.trackThickness)) &&
   (item.railExpanded === undefined || typeof item.railExpanded === "boolean") &&
   (item.railModal === undefined || typeof item.railModal === "boolean") &&
-  (item.railAnchor === undefined || (isRecord(item.railAnchor) && (item.railAnchor.side === "left" || item.railAnchor.side === "right") && Number.isFinite(item.railAnchor.offset))) &&
   typeof item.id === "string" &&
   typeof item.kind === "string" &&
   KINDS.has(item.kind as Kind) &&
