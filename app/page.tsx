@@ -90,8 +90,7 @@ import { AiActionKey, AiPanel, aiErrorText } from "@/components/AiPanel";
 import { TidyState } from "@/components/ui";
 import { AiSettings, DEFAULT_AI, hasKey, isSecureUrl, loadAiSettings, proposeBehavior, proposeDescription, pushHistory, saveAiSettings } from "@/lib/ai";
 import { barSlotOf, bodyRect, carryFrame, pullInto, tidyFrame } from "@/lib/tidy";
-import { updateRail } from "@/lib/rail";
-import { isModalRail, modalRailPlacements } from "@/lib/railView";
+import { constrainModalRails, modalRailOf, updateRail } from "@/lib/rail";
 import { isProject, readProject, saveProject } from "@/lib/project";
 import { hasShareHash, readShareHash } from "@/lib/share";
 import { LoadingIndicator } from "@/components/Loading";
@@ -336,7 +335,11 @@ const LEFT_TABS: { key: LeftTab; icon: string; title: "parts" | "layers" | "colo
 export default function Page() {
   /* ---------- document ---------- */
   const [editAccess, setEditAccess] = useState<"checking" | "editable" | "readonly">("checking");
-  const [groups, setGroups] = useState<Group[]>(seed);
+  const [groups, setGroupState] = useState<Group[]>(seed);
+  /* Enforce the standalone-modal rule for imports, grouping, undo and all edits. */
+  const setGroups = useCallback((next: Group[] | ((prev: Group[]) => Group[])) => {
+    setGroupState((prev) => constrainModalRails(typeof next === "function" ? next(prev) : next));
+  }, []);
   const [frames, setFrames] = useState<Frame[]>(SEED_FRAMES);
   const [paletteKey, setPaletteKey] = useState("purple");
   const [customPalette, setCustomPalette] = useState<Palette | null>(null);
@@ -3003,6 +3006,7 @@ export default function Page() {
   };
 
   const renderGroup = (g: Group, ox: number, oy: number) => {
+    const modalRail = modalRailOf(g);
     if (g.free) {
       const instantG = instantRef.current.has(g.id);
       const allOn = g.items.every((it) => selectedSet.has(it.id));
@@ -3013,9 +3017,9 @@ export default function Page() {
           initial={false}
           animate={{ x: g.x - ox, y: g.y - oy }}
           transition={instantG ? INSTANT : OPEN}
-          style={{ position: "absolute", left: 0, top: 0 }}
+          style={{ position: "absolute", left: 0, top: 0, zIndex: modalRail ? 2 : undefined }}
         >
-          {layoutOf(g, widths).filter((pl) => !isModalRail(pl.item)).map((pl) => (
+          {layoutOf(g, widths).map((pl) => (
             <div key={pl.item.id} style={{ position: "absolute", left: pl.x - g.x, top: pl.y - g.y }}>
               <M3Node
                 item={pl.item}
@@ -3073,6 +3077,7 @@ export default function Page() {
         }}
         transition={instant ? INSTANT : OPEN}
         style={{
+          zIndex: modalRail ? 2 : undefined,
           position: "absolute",
           left: 0,
           top: 0,
@@ -3101,10 +3106,6 @@ export default function Page() {
             );
           }
           const ic = connectSpecOf(c.item);
-          if (isModalRail(c.item)) {
-            const size = sizeOf(c.item, widths);
-            return <div key={c.item.id} aria-hidden style={{ width: size.w, height: size.h, flex: "0 0 auto", pointerEvents: "none" }} />;
-          }
           const radii =
             conn && ic
               ? runRadii(
@@ -3135,17 +3136,6 @@ export default function Page() {
       </motion.div>
     );
   };
-
-  const renderModalRails = (owned: Group[], ox: number, oy: number) => modalRailPlacements(owned, widths).map((pl) => (
-    <motion.div key={`modal:${pl.item.id}`} data-canvas-rail-layer={pl.item.id}
-      initial={false} animate={{ x: pl.x - ox, y: pl.y - oy }}
-      transition={instantRef.current.has(pl.group.id) ? INSTANT : OPEN}
-      style={{ position: "absolute", left: 0, top: 0, zIndex: pl.item.railExpanded ? 2 : undefined }}>
-      <M3Node item={pl.item} palette={p} widths={widths} radii={baseRadii(pl.item)}
-        pressed={pressedId === pl.item.id} selected={selectedSet.has(pl.item.id)} interactive={!handMode}
-        onPointerDown={(e) => onItemPointerDown(e, pl.group, pl.index, pl.item)} />
-    </motion.div>
-  ));
 
   const handMode = !isMobile && (mode === "hand" || spaceHeld);
   const panning = gesture?.kind === "pan";
@@ -3586,8 +3576,8 @@ export default function Page() {
                         >
                           {groups
                             .filter((g) => frameOf.get(g.id) === f.id)
-                            .flatMap((g) => [renderGroup(g, f.x, f.y), ...renderModalRails([g], f.x, f.y)])}
-                          {groups.some((g) => frameOf.get(g.id) === f.id && g.items.some((it) => it.kind === "navRail" && it.railExpanded && it.railModal)) && (
+                            .map((g) => renderGroup(g, f.x, f.y))}
+                          {groups.some((g) => frameOf.get(g.id) === f.id && modalRailOf(g)) && (
                             <div aria-hidden style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.32)", pointerEvents: "none", zIndex: 1 }} />
                           )}
                           {draftBusy && (
@@ -3603,7 +3593,7 @@ export default function Page() {
 
               {groups
                 .filter((g) => !frameOf.has(g.id))
-                .flatMap((g) => [renderGroup(g, 0, 0), ...renderModalRails([g], 0, 0)])}
+                .map((g) => renderGroup(g, 0, 0))}
 
 
               {links.length > 0 && (
@@ -4013,6 +4003,7 @@ export default function Page() {
                     onCancel: cancelAi,
                   }}
                   item={selectedIds.length > 1 ? null : selected}
+                  railStandalone={groups.some((g) => g.items.length === 1 && g.items[0].id === selected?.id)}
                   frame={selectedPartFrame}
                   palette={p}
                   frames={frame === "phone" ? frames : []}
