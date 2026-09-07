@@ -90,7 +90,7 @@ describe("progress track thickness", () => {
   });
 });
 
-describe("buildPrompt structure", () => {
+describe("buildPrompt color output", () => {
   afterEach(() => setGlobalLang("ja")); // restore the module default
 
   it.each(LANGS)("emits the actual secondary color in both modes and every contrast level in %s", (lang) => {
