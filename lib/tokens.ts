@@ -2143,9 +2143,6 @@ export const PLACES: { key: Place; icon: string }[] = [
 ];
 export const isPlace = (v: unknown): v is Place => v === "top" || v === "center" || v === "bottom" || v === "spread";
 
-/** how a selection of parts is lined up: an edge or centre to share, or equal gaps along an axis */
-export type AlignKind = "left" | "centerH" | "right" | "distributeH" | "top" | "centerV" | "bottom" | "distributeV";
-
 export type FramePreset = "phone" | "desktop";
 export const frameSizeOf = (f: Frame) => ({ w: f.w ?? PHONE_W, h: f.h ?? PHONE_H });
 export const isPhoneFrame = (f: Frame) => {

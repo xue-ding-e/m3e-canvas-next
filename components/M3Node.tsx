@@ -94,6 +94,8 @@ export function Icon({
   return (
     <span
       className="msr"
+      /* the ligature is a picture, not words: a screen reader should not spell out its name */
+      aria-hidden
       data-fill={fill ? "1" : "0"}
       style={{
         fontSize: size,

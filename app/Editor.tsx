@@ -53,7 +53,6 @@ import {
   Platform,
   Frame,
   Place,
-  AlignKind,
   FramePreset,
   FRAME_GAP,
   FRAME_LABEL_H,
@@ -123,7 +122,7 @@ import { LangMenu } from "@/components/Menus";
 import { AiActionKey, AiPanel, aiErrorText } from "@/components/AiPanel";
 import { TidyState, PANEL_FADE_H } from "@/components/ui";
 import { AiSettings, DEFAULT_AI, hasKey, isSecureUrl, loadAiSettings, proposeBehavior, proposeDescription, pushHistory, saveAiSettings } from "@/lib/ai";
-import { barSlotOf, bodyRect, carryFrame, pullInto, tidyFrame } from "@/lib/tidy";
+import { barSlotOf, bodyRect, carryFrame, holdsEdgeBar, pullInto, tidyFrame } from "@/lib/tidy";
 import { constrainModalRails, modalRailOf, updateRail } from "@/lib/rail";
 import { isProject, readProject, saveProject } from "@/lib/project";
 import { hasShareHash, readShareHash } from "@/lib/share";
@@ -314,6 +313,32 @@ function migrateGroups(groups: Group[], frames: Frame[]): Group[] {
     });
     return f ? { ...g, y: frameRect(f).b - KIND_SPEC.bottomNav.h } : g;
   });
+}
+
+/** A copy of a unit under fresh ids, moved by (dx, dy). A copied modal rail starts collapsed
+ *  and standard: a screen shows one modal rail, and the copy sits inward of the edge the
+ *  original remembered. */
+function rekeyed(g: Group, dx: number, dy: number): Group {
+  const idMap = new Map(g.items.map((it) => [it.id, uid()]));
+  const pos: Record<string, { x: number; y: number }> | undefined = g.pos ? {} : undefined;
+  if (pos) for (const it of g.items) pos[idMap.get(it.id)!] = g.pos?.[it.id] ?? { x: 0, y: 0 };
+  const items = g.items.map((it) => {
+    const copy: Item = { ...structuredClone(it), id: idMap.get(it.id)! };
+    if (copy.kind === "navRail" && copy.railModal) {
+      copy.railModal = false;
+      copy.railExpanded = false;
+      delete copy[railExpansionSide];
+    }
+    return copy;
+  });
+  return { ...structuredClone(g), id: uid(), x: g.x + dx, y: g.y + dy, pos, items };
+}
+
+/** the ids of the copies, with the copy of the part that was primary last, so it stays the one the panel shows */
+function copiedIds(copies: Group[], primaryAt: number): string[] {
+  const ids = copies.flatMap((c) => c.items.map((it) => it.id));
+  if (primaryAt < 0 || primaryAt >= ids.length) return ids;
+  return [...ids.slice(0, primaryAt), ...ids.slice(primaryAt + 1), ids[primaryAt]];
 }
 
 /** Seed ids are deterministic so server and client render the same markup. */
@@ -2157,6 +2182,8 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
       return;
     }
     snapshot();
+    /* some of the selection sits in a locked group: the rest goes, and the author is told why that part stayed */
+    if (groupsRef.current.some((g) => g.locked && g.items.some((it) => ids.has(it.id)))) showToast(t("lockedKept", getLang()));
     setGroups((prev) =>
       prev
         .map((g) => {
@@ -2187,6 +2214,24 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
     return held.length > 0 && held.every((g) => !!g.locked);
   }, [groups, selectedIds]);
 
+  /** the selection can be placed in a screen: something in it is not a bar, and all of that
+   *  stands on one screen -- a selection of bars alone, or one spread over several screens,
+   *  has no one body to go to */
+  const selectionPlaceable = useMemo(() => {
+    const ids = new Set(selectedIds);
+    const units = groups.filter((g) => g.items.some((it) => ids.has(it.id)) && !holdsEdgeBar(g));
+    if (!units.length) return false;
+    const f = frameOfGroup(units[0], frames, widths);
+    return !!f && units.every((g) => frameOfGroup(g, frames, widths)?.id === f.id);
+  }, [groups, frames, widths, selectedIds]);
+
+  /** the selection covers every group it touches, so locking it locks nothing that was not selected */
+  const selectionWhole = useMemo(() => {
+    const ids = new Set(selectedIds);
+    const held = groups.filter((g) => g.items.some((it) => ids.has(it.id)));
+    return held.length > 0 && held.every((g) => g.items.every((it) => ids.has(it.id)));
+  }, [groups, selectedIds]);
+
   /** locks every group holding a selected part, or unlocks them all when they already are */
   const toggleLockSelected = useCallback(() => {
     const ids = new Set(selectedIds);
@@ -2197,79 +2242,58 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
     setGroups((gs) => gs.map((g) => (g.items.some((it) => ids.has(it.id)) ? { ...g, locked: next || undefined } : g)));
   }, [selectedIds, snapshot]);
 
-  const duplicateSelected = useCallback(() => {
-    if (!selected) return;
-    /* a selected hand-made group is copied whole, keeping its layout */
-    const fg = groupsRef.current.find((g) => g.free && g.items.some((it) => it.id === selected.id));
-    if (fg && fg.items.every((it) => selectedIds.includes(it.id))) {
-      const idMap = new Map(fg.items.map((it) => [it.id, uid()]));
-      const pos: Record<string, { x: number; y: number }> = {};
-      for (const it of fg.items) pos[idMap.get(it.id)!] = fg.pos?.[it.id] ?? { x: 0, y: 0 };
-      const copyG: Group = {
-        ...fg,
-        locked: undefined,
-        id: uid(),
-        x: fg.x + 24,
-        y: fg.y + 24,
-        pos,
-        items: fg.items.map((it) => ({ ...it, id: idMap.get(it.id)!, tabs: it.tabs?.map((t) => ({ ...t })) })),
-      };
-      snapshot();
-      setGroups((prev) => [...prev, copyG]);
-      setSelectedIds(copyG.items.map((it) => it.id));
-      return;
+  /** The selection as units that can be copied: a group whose parts are all selected goes
+   *  whole, keeping its layout; a part picked out of a larger group goes on its own, at its
+   *  place on the canvas. A copy starts unlocked; the lock belongs to the original. */
+  const selectionUnits = useCallback((): Group[] => {
+    const ids = new Set(selectedIds);
+    const rects = new Map(itemRects().map((r) => [r.id, r]));
+    const out: Group[] = [];
+    for (const g of groupsRef.current) {
+      const picked = g.items.filter((it) => ids.has(it.id));
+      if (!picked.length) continue;
+      if (picked.length === g.items.length) {
+        out.push({ ...structuredClone(g), locked: undefined });
+        continue;
+      }
+      for (const it of picked) {
+        const r = rects.get(it.id);
+        if (r) out.push({ id: g.id, x: r.l, y: r.t, axis: connectSpecOf(it)?.axis ?? "x", items: [structuredClone(it)] });
+      }
     }
-    const rect = itemRects().find((r) => r.id === selected.id);
-    if (!rect) return;
-    const copy: Item = {
-      ...selected,
-      id: uid(),
-      tabs: selected.tabs?.map((t) => ({ ...t })),
-    };
-    /* a copied modal rail starts collapsed and standard: a screen shows one modal rail, and
-       the copy sits inward of the edge the original remembered */
-    if (copy.kind === "navRail" && copy.railModal) {
-      copy.railModal = false;
-      copy.railExpanded = false;
-      delete copy[railExpansionSide];
-    }
-    snapshot();
-    setGroups((prev) => [
-      ...prev,
-      {
-        id: uid(),
-        x: rect.l + 24,
-        y: rect.t + 24,
-        axis: connectSpecOf(copy)?.axis ?? "x",
-        items: [copy],
-      },
-    ]);
-    setSelectedIds([copy.id]);
-  }, [selected, selectedIds, itemRects, snapshot]);
+    return out;
+  }, [selectedIds, itemRects]);
 
-  /* The in-app clipboard: Ctrl+C keeps a copy of the selection (a whole group when
-   * the selection covers one) with its offset inside its screen, so Ctrl+V can put it
-   * at the same spot on another screen, or a step aside on the same one. */
-  const clipboardRef = useRef<{ group: Group; dx: number; dy: number; frameId: string | null } | null>(null);
+  /** duplicates everything selected a step aside, and selects the copies */
+  const duplicateSelected = useCallback(() => {
+    const units = selectionUnits();
+    if (!units.length) return;
+    const copies = units.map((u) => rekeyed(u, 24, 24));
+    const primaryAt = units.flatMap((u) => u.items.map((it) => it.id)).indexOf(primaryId ?? "");
+    snapshot();
+    setGroups((prev) => [...prev, ...copies]);
+    setSelectedIds(copiedIds(copies, primaryAt));
+  }, [selectionUnits, primaryId, snapshot]);
+
+  /* The in-app clipboard: Ctrl+C keeps a copy of the selection (whole groups where the
+   * selection covers them) with its offset inside its screen, so Ctrl+V can put it at the
+   * same spot on another screen, or a step aside on the same one. The offset is that of the
+   * selection's top-left corner, so several units keep their places relative to each other. */
+  const clipboardRef = useRef<{ groups: Group[]; dx: number; dy: number; frameId: string | null; primaryAt: number } | null>(null);
 
   const copySelected = useCallback(() => {
     if (!selected) return;
-    const ids = new Set(selectedIds);
     const g = groupsRef.current.find((x) => x.items.some((it) => it.id === selected.id));
     if (!g) return;
-    let group: Group;
-    if (g.items.every((it) => ids.has(it.id))) {
-      /* a copy starts unlocked; the lock belongs to the original */
-      group = { ...structuredClone(g), locked: undefined };
-    } else {
-      const rect = itemRects().find((r) => r.id === selected.id);
-      if (!rect) return;
-      group = { id: g.id, x: rect.l, y: rect.t, axis: connectSpecOf(selected)?.axis ?? "x", items: [structuredClone(selected)] };
-    }
-    /* a group on no screen keeps its canvas position; one on a screen keeps its offset there */
+    const groups = selectionUnits();
+    if (!groups.length) return;
+    const x = Math.min(...groups.map((u) => u.x));
+    const y = Math.min(...groups.map((u) => u.y));
+    /* a selection on no screen keeps its canvas position; one on a screen keeps its offset there */
     const f = frameOfGroup(g, framesRef.current, widthsRef.current);
-    clipboardRef.current = { group, dx: f ? group.x - f.x : 0, dy: f ? group.y - f.y : 0, frameId: f?.id ?? null };
-  }, [selected, selectedIds, itemRects]);
+    const primaryAt = groups.flatMap((u) => u.items.map((it) => it.id)).indexOf(selected.id);
+    clipboardRef.current = { groups, dx: f ? x - f.x : x, dy: f ? y - f.y : y, frameId: f?.id ?? null, primaryAt };
+  }, [selected, selectionUnits]);
 
   const pasteClipboard = useCallback(() => {
     const clip = clipboardRef.current;
@@ -2282,29 +2306,24 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
       if (g) target = frameOfGroup(g, fs, widthsRef.current) ?? undefined;
     }
     if (!target) target = fs.find((f) => f.id === clip.frameId);
-    let x = target && clip.frameId ? target.x + clip.dx : clip.group.x;
-    let y = target && clip.frameId ? target.y + clip.dy : clip.group.y;
-    /* onto a spot already taken (the source, or an earlier paste) it steps aside like a duplicate */
-    while (groupsRef.current.some((g) => g.x === x && g.y === y)) {
-      x += 24;
-      y += 24;
+    const x0 = Math.min(...clip.groups.map((u) => u.x));
+    const y0 = Math.min(...clip.groups.map((u) => u.y));
+    /* with no screen to land on -- none was copied from, or it is gone -- it goes back where it was copied from */
+    let dx = target && clip.frameId ? target.x + clip.dx - x0 : 0;
+    let dy = target && clip.frameId ? target.y + clip.dy - y0 : 0;
+    /* onto a spot already taken (the source, or an earlier paste) it steps aside like a duplicate;
+       a part taken from the middle of a run is known by its own corner, not the run's */
+    const taken = new Set([...groupsRef.current.map((g) => `${g.x},${g.y}`), ...itemRects().map((r) => `${r.l},${r.t}`)]);
+    while (clip.groups.some((u) => taken.has(`${u.x + dx},${u.y + dy}`))) {
+      dx += 24;
+      dy += 24;
     }
-    const idMap = new Map(clip.group.items.map((it) => [it.id, uid()]));
-    const pos: Record<string, { x: number; y: number }> | undefined = clip.group.pos ? {} : undefined;
-    if (pos) for (const it of clip.group.items) pos[idMap.get(it.id)!] = clip.group.pos?.[it.id] ?? { x: 0, y: 0 };
-    const copy: Group = {
-      ...structuredClone(clip.group),
-      id: uid(),
-      x,
-      y,
-      pos,
-      items: clip.group.items.map((it) => ({ ...structuredClone(it), id: idMap.get(it.id)! })),
-    };
+    const copies = clip.groups.map((u) => rekeyed(u, dx, dy));
     snapshot();
-    setGroups((prev) => [...prev, copy]);
-    setSelectedIds(copy.items.map((it) => it.id));
+    setGroups((prev) => [...prev, ...copies]);
+    setSelectedIds(copiedIds(copies, clip.primaryAt));
     setSelectedFrameId(null);
-  }, [selected, selectedFrameId, snapshot]);
+  }, [selected, selectedFrameId, itemRects, snapshot]);
 
   /** the free group the whole selection belongs to, if it is exactly one */
   const selectedGroup = useMemo(() => {
@@ -2315,34 +2334,40 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
     return selectedIds.every((id) => ids.has(id)) && selectedIds.length === g.items.length ? g : null;
   }, [groups, selectedIds]);
 
-  /** Pull the selected parts out of their runs into one free group that keeps
-   *  their positions. It takes the layer slot of the topmost run involved. */
-  /** Lines the selected parts up, or spaces them evenly. Whole groups move: a connected
-   *  run or a hand-made group is one unit, like in Tidy. Several parts line up with each
-   *  other's bounding box; a lone part lines up with the screen's body area, the box Tidy
-   *  fills between the bars. A unit that would land on another part steps away from the
-   *  edge it was aligned to until it is clear. */
-  /** Puts a lone part at one of nine spots in its screen's body, the box Tidy fills between
-   *  the bars. Parts already there are obstacles: the moved part slides along the vertical
-   *  axis, away from the edge it was sent to (down from the top, up from the bottom, the
-   *  nearer way from the middle), until it sits clear of them or the body runs out. */
+  /** Puts the selection at one of nine spots in its screen's body, the box Tidy fills between
+   *  the bars. Whole groups move, as one block: a connected run or a hand-made group is one
+   *  unit, like in Tidy, and several units keep their places relative to each other. A bar in
+   *  the selection is not part of the block: it keeps to its edge. Parts already there are
+   *  obstacles: the block slides along the vertical axis, away from the edge it was sent to
+   *  (down from the top, up from the bottom, the nearer way from the middle), until it sits
+   *  clear of them or the body runs out. */
   const placeSelected = useCallback(
     (col: "left" | "centerH" | "right", row: "top" | "centerV" | "bottom") => {
-      if (selectedIds.length !== 1) return;
+      const ids = new Set(selectedIds);
       const all = groupsRef.current;
-      const g = all.find((x) => !x.locked && x.items.some((it) => it.id === selectedIds[0]));
-      if (!g) return;
-      const f = frameOfGroup(g, framesRef.current, widthsRef.current);
-      if (!f) return;
+      /* a bar stays on the edge it belongs to, and the body it bounds is where the rest goes */
+      const units = all.filter((x) => x.items.some((it) => ids.has(it.id)) && !holdsEdgeBar(x));
+      if (!units.length) return;
+      /* a locked group stays where it is, and the rest does not move without it */
+      if (units.some((x) => x.locked)) {
+        showToast(lockedGroupMsg());
+        return;
+      }
+      const f = frameOfGroup(units[0], framesRef.current, widthsRef.current);
+      /* the block lines up inside one screen; parts spread over several have no one body to fill */
+      if (!f || units.some((x) => frameOfGroup(x, framesRef.current, widthsRef.current)?.id !== f.id)) return;
+      const unitIds = new Set(units.map((x) => x.id));
       const rects = new Map(all.map((x) => [x.id, groupBounds(x, widthsRef.current)]));
-      const r = rects.get(g.id)!;
+      const r = units
+        .map((x) => rects.get(x.id)!)
+        .reduce((a, o) => ({ l: Math.min(a.l, o.l), t: Math.min(a.t, o.t), r: Math.max(a.r, o.r), b: Math.max(a.b, o.b) }));
       const w = r.r - r.l;
       const h = r.b - r.t;
-      const bb = bodyRect(all, f, framesRef.current, widthsRef.current, new Set([g.id]));
+      const bb = bodyRect(all, f, framesRef.current, widthsRef.current, unitIds);
       const x = col === "left" ? bb.l : col === "right" ? bb.r - w : Math.round((bb.l + bb.r) / 2 - w / 2);
       const y0 = row === "top" ? bb.t : row === "bottom" ? bb.b - h : Math.round((bb.t + bb.b) / 2 - h / 2);
       const others = all
-        .filter((x) => x.id !== g.id && frameOfGroup(x, framesRef.current, widthsRef.current)?.id === f.id)
+        .filter((x) => !unitIds.has(x.id) && frameOfGroup(x, framesRef.current, widthsRef.current)?.id === f.id)
         .map((x) => rects.get(x.id)!)
         /* only parts in the same column can be in the way */
         .filter((o) => o.l < x + w && o.r > x);
@@ -2364,87 +2389,13 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
       const dy = y - r.t;
       if (!dx && !dy) return;
       snapshot();
-      setGroups((gs) => gs.map((x) => (x.id === g.id ? { ...x, x: x.x + dx, y: x.y + dy } : x)));
+      setGroups((gs) => gs.map((x) => (unitIds.has(x.id) ? { ...x, x: x.x + dx, y: x.y + dy } : x)));
     },
     [selectedIds, snapshot],
   );
 
-  const alignSelected = useCallback(
-    (kind: AlignKind) => {
-      const ids = new Set(selectedIds);
-      const all = groupsRef.current;
-      /* a locked group is left out of the alignment and stays an obstacle for the others */
-      const units = all.filter((g) => !g.locked && g.items.some((it) => ids.has(it.id)));
-      if (units.length === 0) return;
-      const unitIds = new Set(units.map((g) => g.id));
-      const distributing = kind === "distributeH" || kind === "distributeV";
-      const horizontal = kind === "left" || kind === "centerH" || kind === "right" || kind === "distributeH";
-      const rects = new Map(all.map((g) => [g.id, groupBounds(g, widthsRef.current)]));
-      let bb = units.map((g) => rects.get(g.id)!).reduce((a, r) => ({ l: Math.min(a.l, r.l), t: Math.min(a.t, r.t), r: Math.max(a.r, r.r), b: Math.max(a.b, r.b) }));
-      let screenId: string | null = null;
-      if (units.length === 1) {
-        const f = frameOfGroup(units[0], framesRef.current, widthsRef.current);
-        if (!f || distributing) return;
-        screenId = f.id;
-        bb = bodyRect(all, f, framesRef.current, widthsRef.current, new Set(units.map((g) => g.id)));
-      }
-      const shift = new Map<string, { dx: number; dy: number }>();
-      if (distributing) {
-        const sorted = [...units].sort((a, b) => (horizontal ? rects.get(a.id)!.l - rects.get(b.id)!.l : rects.get(a.id)!.t - rects.get(b.id)!.t));
-        const sizes = sorted.map((g) => (horizontal ? rects.get(g.id)!.r - rects.get(g.id)!.l : rects.get(g.id)!.b - rects.get(g.id)!.t));
-        const span = horizontal ? bb.r - bb.l : bb.b - bb.t;
-        const gap = (span - sizes.reduce((s, v) => s + v, 0)) / (sorted.length - 1);
-        let pos = horizontal ? bb.l : bb.t;
-        sorted.forEach((g, i) => {
-          const r = rects.get(g.id)!;
-          shift.set(g.id, horizontal ? { dx: Math.round(pos) - r.l, dy: 0 } : { dx: 0, dy: Math.round(pos) - r.t });
-          pos += sizes[i] + gap;
-        });
-      } else {
-        /* parts that are not moving, on the same screen, that a moved unit must not land on */
-        const others = all.filter((g) => !unitIds.has(g.id) && (!screenId || frameOfGroup(g, framesRef.current, widthsRef.current)?.id === screenId)).map((g) => rects.get(g.id)!);
-        const hits = (r: { l: number; t: number; r: number; b: number }) => others.filter((o) => o.l < r.r && o.r > r.l && o.t < r.b && o.b > r.t);
-        /* stepping away from the aligned edge: right of a left edge, up from a bottom edge; a centre tries both ways */
-        const dir = kind === "left" || kind === "top" ? 1 : kind === "right" || kind === "bottom" ? -1 : 0;
-        for (const g of units) {
-          const r = rects.get(g.id)!;
-          const w = r.r - r.l;
-          const h = r.b - r.t;
-          const ax = kind === "left" ? bb.l : kind === "centerH" ? Math.round((bb.l + bb.r) / 2 - w / 2) : kind === "right" ? bb.r - w : r.l;
-          const ay = kind === "top" ? bb.t : kind === "centerV" ? Math.round((bb.t + bb.b) / 2 - h / 2) : kind === "bottom" ? bb.b - h : r.t;
-          /* candidates stay inside the reference box; with no clear spot the plain alignment wins */
-          let x = ax;
-          let y = ay;
-          let clear = false;
-          for (let tries = 0, sign = dir || 1; tries < 12; tries++, sign = dir || -sign) {
-            const blocking = hits({ l: x, t: y, r: x + w, b: y + h });
-            if (!blocking.length) {
-              clear = true;
-              break;
-            }
-            const step = 8 + (horizontal ? Math.max(...blocking.map((o) => o.r - o.l)) : Math.max(...blocking.map((o) => o.b - o.t)));
-            if (horizontal) x = clamp(x + sign * step * (dir ? 1 : tries + 1), bb.l, Math.max(bb.l, bb.r - w));
-            else y = clamp(y + sign * step * (dir ? 1 : tries + 1), bb.t, Math.max(bb.t, bb.b - h));
-          }
-          if (!clear) {
-            x = ax;
-            y = ay;
-          }
-          shift.set(g.id, { dx: x - r.l, dy: y - r.t });
-        }
-      }
-      if (![...shift.values()].some((s) => s.dx || s.dy)) return;
-      snapshot();
-      setGroups((gs) =>
-        gs.map((g) => {
-          const s = shift.get(g.id);
-          return s && (s.dx || s.dy) ? { ...g, x: g.x + s.dx, y: g.y + s.dy } : g;
-        }),
-      );
-    },
-    [selectedIds, snapshot],
-  );
-
+  /** Pull the selected parts out of their runs into one free group that keeps
+   *  their positions. It takes the layer slot of the topmost run involved. */
   const groupSelected = useCallback(() => {
     const ids = new Set(selectedIds);
     if (ids.size < 2) return;
@@ -4732,8 +4683,7 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
                   onDuplicate={duplicateSelected}
                   locked={selectedLocked}
                   onToggleLock={toggleLockSelected}
-                  onAlign={alignSelected}
-                  onPlace={placeSelected}
+                  onPlace={selectionPlaceable ? placeSelected : undefined}
                   widths={widths}
                   selfRect={selectedRect}
                   allFrames={frames}
@@ -4741,6 +4691,8 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
                   onShowMenu={onShowMenu}
                   multi={selectedIds.length}
                   grouped={!!selectedGroup}
+                  selectionWhole={selectionWhole}
+                  selectionKey={selectedIds.join(" ")}
                   onGroup={groupSelected}
                   onUngroup={ungroupSelected}
                 />

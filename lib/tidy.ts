@@ -155,9 +155,11 @@ function rowsOf(units: Unit[]): Unit[][] {
   return out;
 }
 
-const isRail = (u: Unit) => u.kind === "navRail";
-const isTop = (u: Unit) => u.kind === "topAppBar" || u.kind === "tabs";
-const isBottomBar = (u: Unit) => u.kind === "bottomNav" || u.kind === "bottomSheet";
+const isRail = (u: { kind: Kind }) => u.kind === "navRail";
+const isTop = (u: { kind: Kind }) => u.kind === "topAppBar" || u.kind === "tabs";
+const isBottomBar = (u: { kind: Kind }) => u.kind === "bottomNav" || u.kind === "bottomSheet";
+/** the group holds one of the bars Tidy pins to a screen's edge; lining parts up leaves it there */
+export const holdsEdgeBar = (g: Group) => g.items.some((it) => isTop(it) || isBottomBar(it) || isRail(it));
 const isFloatingBottom = (u: Unit) => u.kind === "toolbar" || u.kind === "snackbar";
 const isFab = (u: Unit) => u.kind === "fab" || u.kind === "extendedFab" || u.kind === "fabMenu";
 const isOverlay = (u: Unit) => u.kind === "dialog";

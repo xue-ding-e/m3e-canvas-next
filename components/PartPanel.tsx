@@ -189,18 +189,21 @@ export function AlignBox({ onPlace, p }: { onPlace: PlaceFn; p: Palette }) {
 }
 
 /** everything that can be done to the part itself, behind one button: the header stays a title */
-function PartMenu({
+export function PartMenu({
   p,
   locked,
   onDuplicate,
   onToggleLock,
   onDelete,
+  deleteLabel,
 }: {
   p: Palette;
   locked: boolean;
-  onDuplicate: () => void;
+  /** left out where there is nothing whole to copy, such as a loose selection */
+  onDuplicate?: () => void;
   onToggleLock?: () => void;
   onDelete: () => void;
+  deleteLabel?: string;
 }) {
   const lang = useLang();
   const [open, setOpen] = useState(false);
@@ -245,9 +248,9 @@ function PartMenu({
     items[next]?.focus();
   };
   const rows: { key: string; icon: string; label: string; danger?: boolean; onClick: () => void }[] = [
-    { key: "duplicate", icon: "content_copy", label: t("duplicate", lang), onClick: onDuplicate },
+    ...(onDuplicate ? [{ key: "duplicate", icon: "content_copy", label: t("duplicate", lang), onClick: onDuplicate }] : []),
     ...(onToggleLock ? [{ key: "lock", icon: locked ? "lock_open" : "lock", label: t(locked ? "unlock" : "lock", lang), onClick: onToggleLock }] : []),
-    { key: "delete", icon: "delete", label: t("delete", lang), danger: true, onClick: onDelete },
+    { key: "delete", icon: "delete", label: deleteLabel ?? t("delete", lang), danger: true, onClick: onDelete },
   ];
   return (
     <div ref={box} style={{ position: "relative", flex: "0 0 auto" }}>

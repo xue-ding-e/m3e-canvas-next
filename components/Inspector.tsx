@@ -21,13 +21,13 @@ import {
   halfWidth,
   isPhoneFrame,
   variantStyle,
-  AlignKind,
 } from "@/lib/tokens";
 import { ButtonInspector } from "./ButtonInspector";
 import { PartInspector } from "./PartInspector";
+import { AlignBox, PartMenu, PlaceFn } from "./PartPanel";
 import { Icon } from "./M3Node";
-import { ButtonRun, Field, IconBtn, Section, Segmented } from "./ui";
-import { TRANSITION_TEXT, UIKey, t, useLang } from "@/lib/i18n";
+import { PanelShell, Section, Segmented } from "./ui";
+import { TRANSITION_TEXT, t, useLang } from "@/lib/i18n";
 
 export function variantsOf(kind: Kind): { key: Variant; label: string }[] {
   const variants = VARIANTS.map((v) => ({ ...v, label: t(v.key) }));
@@ -260,75 +260,83 @@ export function ActionEditor({
 /** what a field's AI button needs from the page; `reason` explains a disabled button */
 export type AiHooks = { ready: boolean; reason?: string; busy: boolean; onRun: () => void; onCancel: () => void };
 
-/** A small picture of what an alignment does: a dashed box for the reference (the screen's
- *  body for one part, the selection for several) and two bars placed the way the parts will be;
- *  spacing evenly shows three bars with equal gaps. */
-function AlignGlyph({ kind, color, faint }: { kind: AlignKind; color: string; faint: string }) {
-  const bars: [number, number, number, number][] =
-    kind === "left" ? [[4, 7, 16, 6], [4, 15, 10, 6]]
-    : kind === "centerH" ? [[12, 7, 16, 6], [15, 15, 10, 6]]
-    : kind === "right" ? [[20, 7, 16, 6], [26, 15, 10, 6]]
-    : kind === "distributeH" ? [[4, 8, 6, 12], [17, 8, 6, 12], [30, 8, 6, 12]]
-    : kind === "top" ? [[12, 4, 6, 14], [22, 4, 6, 8]]
-    : kind === "centerV" ? [[12, 7, 6, 14], [22, 10, 6, 8]]
-    : kind === "bottom" ? [[12, 10, 6, 14], [22, 16, 6, 8]]
-    : [[14, 4, 12, 4], [14, 12, 12, 4], [14, 20, 12, 4]];
-  return (
-    <svg width={40} height={28} viewBox="0 0 40 28" aria-hidden>
-      <rect x={1} y={1} width={38} height={26} rx={3} fill="none" stroke={faint} strokeWidth={1} strokeDasharray="3 2" />
-      {bars.map(([x, y, w, h], i) => (
-        <rect key={i} x={x} y={y} width={w} height={h} rx={1.5} fill={color} />
-      ))}
-    </svg>
-  );
-}
-
-/** The alignment controls: one row for left / centre / right, one for top / middle / bottom,
- *  each ending in "space evenly", which needs at least two parts. One part lines up with its
- *  screen's body; several line up with each other. Each button draws its result. */
-function AlignSection({ single, onAlign, p }: { single: boolean; onAlign: (kind: AlignKind) => void; p: Palette }) {
+/** The panel for several parts at once, or for one hand-made group. It wears the chrome a
+ *  part's panel does -- the title row with its menu, then short sections -- and holds only what
+ *  a selection has: lining its parts up, and making or breaking the group. */
+function GroupPanel({
+  p,
+  count,
+  grouped,
+  locked,
+  onToggleLock,
+  onDuplicate,
+  onDelete,
+  onGroup,
+  onUngroup,
+  onPlace,
+  selectionKey,
+}: {
+  p: Palette;
+  count: number;
+  grouped: boolean;
+  locked: boolean;
+  onToggleLock?: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+  onGroup?: () => void;
+  onUngroup?: () => void;
+  onPlace?: PlaceFn;
+  /** names the selection, so the spot picked for one is not shown lit for the next */
+  selectionKey: string;
+}) {
   const lang = useLang();
-  const rows: [AlignKind, UIKey][][] = [
-    [["left", "alignLeft"], ["centerH", "alignCenterH"], ["right", "alignRight"], ["distributeH", "distributeH"]],
-    [["top", "alignTop"], ["centerV", "alignCenterV"], ["bottom", "alignBottom"], ["distributeV", "distributeV"]],
-  ];
+  const title = grouped ? t("group", lang) : lang === "en" ? `${count} ${t("selectedParts", lang)}` : `${count}${t("selectedParts", lang)}`;
+  const toggle = grouped ? onUngroup : onGroup;
   return (
-    <Section id="align" icon="align_horizontal_left" title={t("align", lang)} p={p}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {rows.map((row, i) => (
-          <ButtonRun key={i}>
-            {row.map(([kind, key], j) => {
-              const off = single && kind.startsWith("distribute");
-              const outer = 22;
-              const inner = 8;
-              return (
-                <button
-                  key={kind}
-                  onClick={() => onAlign(kind)}
-                  disabled={off}
-                  title={t(key, lang)}
-                  aria-label={t(key, lang)}
-                  className="m3-press"
-                  style={{
-                    flex: 1,
-                    height: 44,
-                    border: "none",
-                    borderRadius: `${j === 0 ? outer : inner}px ${j === row.length - 1 ? outer : inner}px ${j === row.length - 1 ? outer : inner}px ${j === 0 ? outer : inner}px`,
-                    background: p.surfaceContainerHigh,
-                    cursor: off ? "default" : "pointer",
-                    display: "grid",
-                    placeItems: "center",
-                    opacity: off ? 0.38 : 1,
-                  }}
-                >
-                  <AlignGlyph kind={kind} color={off ? p.onSurfaceVariant : p.primary} faint={p.outline} />
-                </button>
-              );
-            })}
-          </ButtonRun>
-        ))}
+    <PanelShell
+      p={p}
+      locked={locked}
+      onUnlock={onToggleLock}
+      head={
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, padding: "0 2px 0 6px", color: p.onSurfaceVariant }}>
+          <Icon name={grouped ? "group_work" : "select_all"} size={20} />
+          <span style={{ fontSize: 14, fontWeight: 600, flex: 1, minWidth: 0, color: p.onSurface }}>{title}</span>
+          <PartMenu p={p} locked={locked} onDuplicate={onDuplicate} onToggleLock={onToggleLock} onDelete={onDelete} deleteLabel={t("deleteSelection", lang)} />
+        </div>
+      }
+    >
+      {onPlace && (
+        <Section id="group-align" icon="grid_on" title={t("align", lang)} p={p}>
+          <AlignBox key={selectionKey} onPlace={onPlace} p={p} />
+        </Section>
+      )}
+      {/* the header already names the group, so the button that makes or breaks it stands under the sections without a title of its own */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "0 4px" }}>
+        <button
+          onClick={toggle}
+          className="m3-press"
+          style={{
+            height: 44,
+            borderRadius: 22,
+            border: "none",
+            background: p.secondaryContainer,
+            color: p.onSecondaryContainer,
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            width: "100%",
+          }}
+        >
+          <Icon name={grouped ? "ungroup" : "group_work"} size={20} />
+          {t(grouped ? "ungroup" : "makeGroup", lang)}
+        </button>
+        <div style={{ fontSize: 12, lineHeight: 1.5, color: p.onSurfaceVariant, padding: "0 4px", textWrap: "pretty" }}>{t(grouped ? "groupEditNote" : "groupHint", lang)}</div>
       </div>
-    </Section>
+    </PanelShell>
   );
 }
 
@@ -345,10 +353,11 @@ export function Inspector({
   onToggleLock,
   multi,
   grouped,
+  selectionWhole,
+  selectionKey,
   railStandalone = false,
   onGroup,
   onUngroup,
-  onAlign,
   widths,
   onPlace,
   selfRect,
@@ -372,15 +381,17 @@ export function Inspector({
   multi: number;
   /** the selection is exactly one hand-made group */
   grouped?: boolean;
+  /** the selection covers every group it touches, so a lock on it holds nothing more */
+  selectionWhole?: boolean;
+  /** the selected ids, joined: tells one multi-selection from the next */
+  selectionKey?: string;
   /** Modal expansion is available only when this rail owns its group. */
   railStandalone?: boolean;
   onGroup?: () => void;
   onUngroup?: () => void;
-  /** lines the selected parts up with each other, or spaces them evenly */
-  onAlign?: (kind: AlignKind) => void;
   /** measured widths of the parts that size themselves to their text */
   widths?: Record<string, number>;
-  /** puts a lone part at one of nine spots in its screen's body, clear of the parts already there */
+  /** puts the selection at one of nine spots in its screen's body, clear of the parts already there */
   onPlace?: (col: "left" | "centerH" | "right", row: "top" | "centerV" | "bottom") => void;
   /** where the selected part sits on the canvas, for the tap map */
   selfRect?: { x: number; y: number; w: number; h: number } | null;
@@ -395,56 +406,21 @@ export function Inspector({
 
   if (!item) {
     if (multi > 1) {
-      const bigBtn = (icon: string, label: string, onClick?: () => void) => (
-        <button
-          onClick={onClick}
-          className="m3-press"
-          style={{
-            height: 48,
-            borderRadius: 24,
-            border: "none",
-            background: p.primary,
-            color: p.onPrimary,
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            width: "100%",
-          }}
-        >
-          <Icon name={icon} size={22} />
-          {label}
-        </button>
-      );
       return (
-        <div className="no-scrollbar" style={{ padding: "12px 12px 20px", overflowY: "auto", height: "100%" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginBottom: 12,
-              padding: "6px 6px 6px 14px",
-              borderRadius: 20,
-              background: p.secondaryContainer,
-              color: p.onSecondaryContainer,
-            }}
-          >
-            <Icon name={grouped ? "group_work" : "select_all"} size={20} />
-            <span style={{ fontSize: 14, fontWeight: 600, flex: 1, minWidth: 0 }}>
-              {grouped ? t("group", lang) : lang === "en" ? `${multi} ${t("selectedParts", lang)}` : `${multi}${t("selectedParts", lang)}`}
-            </span>
-            <IconBtn icon="delete" p={p} danger onClick={onDelete} title={t("deleteSelection", lang)} size={32} />
-          </div>
-          {onAlign && <AlignSection single={false} onAlign={onAlign} p={p} />}
-          {grouped ? bigBtn("ungroup", t("ungroup", lang), onUngroup) : bigBtn("group_work", t("makeGroup", lang), onGroup)}
-          <div style={{ marginTop: 10, fontSize: 12, lineHeight: 1.5, color: p.onSurfaceVariant, padding: "0 6px" }}>
-            {grouped ? t("groupEditNote", lang) : `${t("groupHint", lang)} (Ctrl+G)`}
-          </div>
-        </div>
+        <GroupPanel
+          p={p}
+          count={multi}
+          grouped={!!grouped}
+          locked={!!locked}
+          /* a loose selection locks only when that locks nothing more than it; a lock already on can always come off */
+          onToggleLock={locked || selectionWhole ? onToggleLock : undefined}
+          onDuplicate={onDuplicate}
+          onDelete={onDelete}
+          onGroup={onGroup}
+          onUngroup={onUngroup}
+          onPlace={onPlace}
+          selectionKey={selectionKey ?? ""}
+        />
       );
     }
     return (
