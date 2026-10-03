@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { flushSync } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion, useSpring } from "motion/react";
 import { toPng } from "html-to-image";
 import { buildPrompt, effectivePrompt } from "@/lib/prompt";
@@ -590,6 +591,8 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
   modeRef.current = mode;
   const spaceRef = useRef(spaceHeld);
   spaceRef.current = spaceHeld;
+  /** focus last moved with Tab, not with a pointer */
+  const tabbedRef = useRef(false);
   const frameRef = useRef(frame);
   frameRef.current = frame;
   const mobileRef = useRef(isMobile);
@@ -1374,6 +1377,38 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
     setDrag({ ...d });
   };
 
+  /** The group a new part becomes when it lands with its top-left at rawX/rawY, on the screen
+   *  under its centre if there is one. A bar spans that screen beside its rail; any other part
+   *  keeps its phone-sized default (a list or a field as wide as a desktop is rarely what the
+   *  author means), but no taller than the screen. Off any guide the part settles on the 4dp
+   *  grid of the screen it lands on; `held` names the axes that keep their whole pixel instead
+   *  (a guide's hold, or a Ctrl drop). A part that grew to the screen's width is kept inside it,
+   *  then settles back on the grid. */
+  const landNewPart = (item: Item, rawX: number, rawY: number, held: (axis: "x" | "y") => boolean): Group => {
+    const sz = sizeOf(item, widthsRef.current);
+    const targetFrame = framesRef.current.find((f) => {
+      const r = frameRect(f);
+      const cx = rawX + sz.w / 2;
+      const cy = rawY + sz.h / 2;
+      return cx >= r.l && cx <= r.r && cy >= r.t && cy <= r.b;
+    });
+    const slot = targetFrame ? barSlotOf(groupsRef.current, targetFrame, framesRef.current, widthsRef.current) : null;
+    const isBar = FULL_WIDTH.includes(item.kind);
+    const placedItem = targetFrame && slot ? (isBar ? carryItemSize(item, { w: PHONE_W, h: PHONE_H }, { w: slot.w, h: frameSizeOf(targetFrame).h }) : fitHeight(item, frameSizeOf(targetFrame).h)) : item;
+    const origin = targetFrame ?? { x: 0, y: 0 };
+    const settle = (axis: "x" | "y", pos: number) => (held(axis) ? Math.round(pos) : onGrid(pos, origin[axis]));
+    const landed: Group = {
+      id: uid(),
+      x: isBar && slot ? Math.round(slot.x) : settle("x", rawX),
+      y: settle("y", rawY),
+      axis: connectSpecOf(item)?.axis ?? "x",
+      items: [placedItem],
+    };
+    const pulled = targetFrame ? pullInto(landed, targetFrame, widthsRef.current) : landed;
+    if (pulled === landed) return pulled;
+    return { ...pulled, x: held("x") ? pulled.x : onGrid(pulled.x, origin.x), y: held("y") ? pulled.y : onGrid(pulled.y, origin.y) };
+  };
+
   const onPartPointerDown = (e: React.PointerEvent, kind: Kind) => {
     if (e.button !== 0) return;
     e.preventDefault();
@@ -1769,41 +1804,8 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
       const rawX = loose ? d.px - d.offX : d.guide?.x ?? d.px - d.offX;
       const rawY = loose ? d.py - d.offY : d.guide?.y ?? d.py - d.offY;
       if (d.fromPalette) snapshot();
-      /* the screen the part was let go over, whatever size that screen is */
-      const targetFrame = framesRef.current.find((f) => {
-        const r = frameRect(f);
-        const cx = rawX + sz.w / 2;
-        const cy = rawY + sz.h / 2;
-        return cx >= r.l && cx <= r.r && cy >= r.t && cy <= r.b;
-      });
-      /* a bar spans the screen it lands on, beside its rail; any other part keeps its phone-sized
-       * default (a list or a field as wide as a desktop is rarely what the author means), but no
-       * taller than the screen */
-      const slot = targetFrame ? barSlotOf(groupsRef.current, targetFrame, framesRef.current, widthsRef.current) : null;
-      const isBar = FULL_WIDTH.includes(item.kind);
-      const placedItem = targetFrame && slot ? (isBar ? carryItemSize(item, { w: PHONE_W, h: PHONE_H }, { w: slot.w, h: frameSizeOf(targetFrame).h }) : fitHeight(item, frameSizeOf(targetFrame).h)) : item;
-      /* off any guide, the part settles on the 4dp grid of the screen it lands on */
-      const origin = targetFrame ?? { x: 0, y: 0 };
-      /* Ctrl keeps the pixel the cursor chose; a guide holds its whole-pixel
-         position; otherwise the axis settles on the 4dp grid as before.
-         A bar dropped on a screen keeps its own spanning rule. */
-      const settle = (onGuide: boolean, pos: number, grid: number) =>
-        loose || onGuide ? Math.round(pos) : onGrid(pos, grid);
-      const dropped: Group = {
-        id: uid(),
-        x: isBar && slot ? Math.round(slot.x) : settle(d.guide?.gx !== undefined, rawX, origin.x),
-        y: settle(d.guide?.gy !== undefined, rawY, origin.y),
-        axis: connectSpecOf(item)?.axis ?? "x",
-        items: [placedItem],
-      };
-      /* a part that grew to the screen's width is kept inside it, then settles back on the grid */
-      const pulled = targetFrame ? pullInto(dropped, targetFrame, widthsRef.current) : dropped;
-      /* a Ctrl drop keeps whatever pullInto chose, whole pixels included;
-         otherwise a part pulled back in settles on the grid again */
-      const ng =
-        pulled === dropped || loose
-          ? pulled
-          : { ...pulled, x: d.guide?.gx !== undefined ? pulled.x : onGrid(pulled.x, origin.x), y: d.guide?.gy !== undefined ? pulled.y : onGrid(pulled.y, origin.y) };
+      /* Ctrl keeps the pixel the cursor chose and a guide holds its whole-pixel position */
+      const ng = landNewPart(item, rawX, rawY, (axis) => loose || (axis === "x" ? d.guide?.gx : d.guide?.gy) !== undefined);
       setGroups((prev) =>
         prev.some((g) => g.items.some((it) => it.id === item.id))
           ? prev
@@ -2715,16 +2717,31 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
   const ensureFrameRef = useRef(() => {});
   ensureFrameRef.current = ensureFrame;
 
-  /** phone UI: the plus button drops a new button where the view is looking,
-   *  kept inside the screen, and nudged down when that spot is already taken */
-  const addButton = () => {
+  /** A palette tile chosen without a pointer, and the phone's plus button, drop a part where
+   *  the view is looking, landing as a drop there would. Over a screen it is kept inside it and
+   *  nudged down when that spot is already taken; over empty canvas it stays at the centre of
+   *  the view, so the new part is always in sight */
+  const addPart = (kind: Kind) => {
+    /* a snapped drop still settling is committed and rendered first, so the undo step taken
+     * below sees it and the free-spot search counts it */
+    if (pendingRef.current) flushSync(flushPending);
     const r = canvasRect();
     const v = viewRef.current;
-    const item = makeItem("button");
+    const item = makeItem(kind);
     const sz = sizeOf(item, widthsRef.current);
-    const f = framesRef.current[0];
-    let x = ((r?.width ?? 0) / 2 - v.x) / v.z - sz.w / 2;
-    let y = ((r?.height ?? 0) / 2 - v.y) / v.z - sz.h / 2;
+    const cx = ((r?.width ?? 0) / 2 - v.x) / v.z;
+    const cy = ((r?.height ?? 0) / 2 - v.y) / v.z;
+    /* screens are hidden on a blank canvas; the phone shows one screen at a time, so its plus
+     * button always means that screen */
+    const f =
+      frameRef.current !== "phone"
+        ? undefined
+        : framesRef.current.find((fr) => {
+            const fr2 = frameRect(fr);
+            return cx >= fr2.l && cx <= fr2.r && cy >= fr2.t && cy <= fr2.b;
+          }) ?? (mobileRef.current ? framesRef.current[0] : undefined);
+    let x = cx - sz.w / 2;
+    let y = cy - sz.h / 2;
     if (f) {
       const { w, h } = frameSizeOf(f);
       const lx = f.x + Math.min(FRAME_MARGIN, (w - sz.w) / 2);
@@ -2737,18 +2754,11 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
       while (taken(y) && y + sz.h * 2 < f.y + h && tries++ < 12) y += sz.h + 12;
     }
     snapshot();
-    setGroups((gs) => [
-      ...gs,
-      {
-        id: uid(),
-        x: Math.round(x),
-        y: Math.round(y),
-        axis: "x",
-        items: [item],
-      },
-    ]);
+    const ng = landNewPart(item, x, y, () => false);
+    setGroups((gs) => [...gs, ng]);
     setSelectedIds([item.id]);
     setSelectedFrameId(null);
+    setRightTab("edit");
     setSheet(null);
   };
 
@@ -3201,6 +3211,7 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Tab") tabbedRef.current = true;
       if (editAccess !== "editable") return;
       const t = e.target as HTMLElement;
       const typing =
@@ -3248,6 +3259,9 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
         else groupSelected();
         return;
       }
+      /* Space presses a control reached with Tab instead of holding the hand tool; a button
+       * clicked with the mouse keeps focus too, and must not be pressed again */
+      if (e.key === " " && tabbedRef.current && t.closest?.("button, [role=button]")) return;
       if (e.key === " " && !e.repeat) {
         e.preventDefault();
         setSpaceHeld(true);
@@ -3289,11 +3303,16 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.key === " ") setSpaceHeld(false);
     };
+    const onPointer = () => {
+      tabbedRef.current = false;
+    };
     window.addEventListener("keydown", onKey);
     window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("pointerdown", onPointer, true);
     return () => {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("pointerdown", onPointer, true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -4005,6 +4024,7 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
                       )
                     }
                     onPartPointerDown={onPartPointerDown}
+                    onPartActivate={addPart}
                   />
                 ) : leftTab === "color" ? (
                   <ColorPanel
@@ -4469,7 +4489,7 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
 
           {isMobile && sheet === null && (
             <button
-              onClick={addButton}
+              onClick={() => addPart("button")}
               title={t("addButton", lang)}
               aria-label={t("addButton", lang)}
               className="m3-press"

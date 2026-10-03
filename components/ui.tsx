@@ -1499,47 +1499,64 @@ export function Tile({
 }) {
   const lang = useLang();
   return (
-    <div
-      className="m3-tile"
-      onPointerDown={onPointerDown}
-      onClick={onClick}
-      title={label}
-      style={{
-        position: "relative",
-        display: "flex",
-        flexDirection: compact ? "row" : "column",
-        alignItems: "center",
-        justifyContent: compact ? "flex-start" : "center",
-        gap: compact ? 10 : 6,
-        padding: compact ? "8px 12px" : "12px 6px 10px",
-        borderRadius: 16,
-        background: active ? p.secondaryContainer : p.surfaceContainerLow,
-        color: active ? p.onSecondaryContainer : p.onSurface,
-        cursor: onPointerDown ? "grab" : "pointer",
-        userSelect: "none",
-        touchAction: "none",
-        minHeight: compact ? 40 : 72,
-        boxSizing: "border-box",
-      }}
-    >
-      <Icon name={icon} size={compact ? 20 : 26} color={active ? p.onSecondaryContainer : p.primary} />
-      <span
+    <div className="m3-tile" style={{ position: "relative", display: "flex", borderRadius: 16 }}>
+      <button
+        type="button"
+        className="m3-tile-face"
+        onPointerDown={onPointerDown}
+        /* with a pointer handler the press itself does the work, so only a click that came
+         * without a pointer (Enter, Space, a screen reader) reaches onClick */
+        onClick={(e) => {
+          if (onClick && (!onPointerDown || e.detail === 0)) onClick();
+        }}
+        /* a held Enter would click once per key repeat */
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && e.repeat) e.preventDefault();
+        }}
+        title={label}
         style={{
-          fontSize: 11,
-          fontWeight: 500,
-          lineHeight: 1.2,
-          textAlign: "center",
-          color: active ? p.onSecondaryContainer : p.onSurfaceVariant,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-          maxWidth: "100%",
+          flex: 1,
+          minWidth: 0,
+          margin: 0,
+          border: "none",
+          font: "inherit",
+          outlineColor: p.primary,
+          display: "flex",
+          flexDirection: compact ? "row" : "column",
+          alignItems: "center",
+          justifyContent: compact ? "flex-start" : "center",
+          gap: compact ? 10 : 6,
+          padding: compact ? "8px 12px" : "12px 6px 10px",
+          borderRadius: 16,
+          background: active ? p.secondaryContainer : p.surfaceContainerLow,
+          color: active ? p.onSecondaryContainer : p.onSurface,
+          cursor: onPointerDown ? "grab" : "pointer",
+          userSelect: "none",
+          touchAction: "none",
+          minHeight: compact ? 40 : 72,
+          boxSizing: "border-box",
         }}
       >
-        {label}
-      </span>
+        <Icon name={icon} size={compact ? 20 : 26} color={active ? p.onSecondaryContainer : p.primary} />
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 500,
+            lineHeight: 1.2,
+            textAlign: "center",
+            color: active ? p.onSecondaryContainer : p.onSurfaceVariant,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            maxWidth: "100%",
+          }}
+        >
+          {label}
+        </span>
+      </button>
       {onStar && (
         <button
+          type="button"
           className="m3-star"
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
@@ -1558,6 +1575,7 @@ export function Tile({
             border: "none",
             background: "transparent",
             color: starred ? p.primary : p.outline,
+            outlineColor: p.primary,
             cursor: "pointer",
             display: "grid",
             placeItems: "center",
