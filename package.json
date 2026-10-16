@@ -13,14 +13,17 @@
     "test": "vitest run",
     "build:headless": "tsc -p tsconfig.headless.json",
     "cli": "node dist-headless/cli/main.js",
+    "mcp": "node dist-headless/cli/mcp.js",
     "pretest": "npm run build:headless"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
     "html-to-image": "^1.11.13",
     "motion": "^13.4.4",
     "next": "16.3.6",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
