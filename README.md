@@ -1,3 +1,7 @@
+> **M3E Canvas Next** is an independently maintained downstream of [lnkiai/m3e-canvas](https://github.com/lnkiai/m3e-canvas). Original upstream attribution and licensing are preserved. Our `main` keeps linear development history; `upstream-main` preserves the original upstream history.
+>
+> Downstream automation: [headless CLI](docs/headless-cli.md) · [stdio MCP and agent skill](skills/m3e-canvas/SKILL.md).
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/readme/banner-dark.png" />

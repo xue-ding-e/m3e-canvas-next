@@ -1,3 +1,7 @@
+> **M3E Canvas Next** 是独立维护的下游项目，基于 [lnkiai/m3e-canvas](https://github.com/lnkiai/m3e-canvas)，保留原项目归属与许可。自有 `main` 保持线性开发历史，`upstream-main` 保留原始上游历史。
+>
+> 下游自动化入口：[无浏览器 CLI](docs/headless-cli.md) · [stdio MCP 与 agent skill](skills/m3e-canvas/SKILL.md)。
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/readme/banner-dark.png" />
