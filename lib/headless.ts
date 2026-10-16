@@ -1,10 +1,11 @@
+import { isHex } from "./color";
 import { isLang, type Lang } from "./i18n";
 import { migrateGroups } from "./migrate";
 import { isProject } from "./project";
 import { buildPrompt } from "./prompt";
 import { constrainModalRails } from "./rail";
 import { shareLink } from "./share";
-import { PALETTES, TRANSITIONS, VARIANTS, normalizeTheme, paletteOf, type Doc } from "./tokens";
+import { COLOR_TOKENS, PALETTES, TRANSITIONS, VARIANTS, normalizeTheme, paletteOf, type Doc } from "./tokens";
 
 export type HeadlessErrorCode = "INVALID_JSON" | "INVALID_PROJECT" | "INVALID_OPTIONS" | "UNKNOWN_FRAME";
 export const MAX_PROJECT_BYTES = 1024 * 1024;
@@ -54,19 +55,20 @@ function assertOptionalFields(doc: Doc) {
   const string = (v: unknown) => typeof v === "string";
   const strings = (v: unknown) => Array.isArray(v) && v.every(string);
   const boolean = (v: unknown) => typeof v === "boolean";
+  const colorToken = (v: unknown) => COLOR_TOKENS.some((token) => token.key === v);
   const action = (v: unknown) => record(v) && string(v.to) && TRANSITIONS.some((t) => t.key === v.transition) && optional(v.url, string);
   const check = (valid: boolean, field: string) => {
     if (!valid) throw new HeadlessError("INVALID_PROJECT", `Invalid optional project field: ${field}.`);
   };
   for (const frame of doc.frames) {
-    check(optional(frame.bg, string) && optional(frame.noteHistory, strings), "frame");
+    check(optional(frame.bg, colorToken) && optional(frame.noteHistory, strings), "frame");
     check(optional(frame.swipe, (v) => record(v) && Object.values(v).every(string)), "frame.swipe");
   }
   for (const group of doc.groups) {
     check(optional(group.free, boolean), "group.free");
     check(optional(group.pos, (v) => record(v) && Object.values(v).every((p) => record(p) && Number.isFinite(p.x) && Number.isFinite(p.y))), "group.pos");
     for (const item of group.items) {
-      check(optional(item.icon2, (v) => v === null || string(v)) && optional(item.src, string) && optional(item.fill, string) && optional(item.iconFill, string), "item appearance");
+      check(optional(item.icon2, (v) => v === null || string(v)) && optional(item.src, string) && optional(item.fill, colorToken) && optional(item.iconFill, (v) => v === "none" || colorToken(v)), "item appearance");
       check([item.switch, item.noImage, item.checked, item.wavy, item.contained, item.bold].every((v) => optional(v, boolean)), "item flags");
       check(optional(item.noteHistory, strings), "item.noteHistory");
       check(optional(item.action, action), "item.action");
@@ -79,6 +81,11 @@ function assertOptionalFields(doc: Doc) {
     // Old palettes may omit only secondary; paletteOf supplies that migration.
     check(Object.keys(PALETTES[0]).filter((key) => key !== "secondary" && key !== "seed").every((key) => string(palette[key])), "customPalette roles");
     check(optional(palette.secondary, string) && optional(palette.seed, string), "customPalette");
+    // These roles reach CSS backgrounds. A string type alone admits url(...)
+    // and can turn an otherwise local import into an arbitrary network request.
+    for (const key of [...Object.keys(PALETTES[0]).filter((key) => key !== "key" && key !== "label" && key !== "seed"), "seed"]) {
+      check(optional(palette[key], (v) => typeof v === "string" && isHex(v)), `customPalette.${key}`);
+    }
   }
 }
 

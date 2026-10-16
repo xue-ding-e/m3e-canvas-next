@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { HeadlessError, MAX_PROJECT_BYTES, normalizeProject, parseProject, projectPrompt, projectShareLink } from "./headless";
 import { buildPrompt } from "./prompt";
+import { PALETTES } from "./tokens";
 import { readShareHash } from "./share";
 
 const minimal = () => ({ groups: [], frames: [{ id: "home", name: "Home", x: 0, y: 0 }] });
@@ -50,6 +51,19 @@ describe("headless project services", () => {
   it("rejects missing custom palette roles and malformed group positions", () => {
     expect(() => normalizeProject({ ...minimal(), paletteKey: "custom", customPalette: { primary: "#000000" } })).toThrow(/customPalette/);
     expect(() => normalizeProject({ ...minimal(), groups: [{ id: "g", x: 0, y: 0, axis: "x", free: true, pos: { i: { x: "oops", y: null } }, items: [{ id: "i", kind: "button", label: "Save", icon: null, variant: "filled" }] }] })).toThrow(/group.pos/);
+  });
+  it("rejects CSS resource injection in every custom color role and seed", () => {
+    for (const role of [...Object.keys(PALETTES[0]).filter((key) => !["key", "label", "seed"].includes(key)), "seed"]) {
+      expect(() => normalizeProject({ ...minimal(), customPalette: { ...PALETTES[0], [role]: "url(https://example.invalid/track)" } })).toThrow(/customPalette/);
+    }
+  });
+  it("accepts only palette color tokens for backgrounds and item fills", () => {
+    for (const bg of ["label", "key", "seed", "url(https://example.invalid/track)"]) {
+      expect(() => normalizeProject({ ...minimal(), frames: [{ id: "home", name: "Home", x: 0, y: 0, bg }] })).toThrow();
+    }
+    for (const field of ["fill", "iconFill"]) {
+      expect(() => normalizeProject({ ...minimal(), groups: [{ id: "g", x: 0, y: 0, axis: "x", items: [{ id: "i", kind: "button", label: "Save", icon: null, variant: "filled", [field]: "label" }] }] })).toThrow();
+    }
   });
   it("classifies bad JSON, shape, depth, and size", () => {
     expect(() => parseProject("{" )).toThrowError(expect.objectContaining({ code: "INVALID_JSON" }));
