@@ -1,0 +1,676 @@
+{
+  "schemaVersion": 1,
+  "textFamilies": [
+    "Roboto",
+    "Roboto Flex",
+    "Roboto Serif",
+    "Noto Sans SC"
+  ],
+  "fallback": "Noto Sans SC (fixed Simplified Chinese glyph forms; not host/JP/KR fallback)",
+  "icons": "Material Symbols Rounded",
+  "packages": [
+    {
+      "package": "@fontsource-variable/roboto",
+      "version": "5.3.0",
+      "license": "OFL-1.1",
+      "source": "https://registry.npmjs.org/@fontsource-variable/roboto/-/roboto-5.3.0.tgz",
+      "integrity": "sha512-BoaaZiQf8fgtxv07KXkTwx1bKz/EoqIlTXq2OOKKXINxp6qXWdnlChqV+hSaDANS49yyUASFl3OVBMMDTCIHFA==",
+      "files": [
+        "roboto-cyrillic-ext-wght-normal.woff2",
+        "roboto-cyrillic-wght-normal.woff2",
+        "roboto-greek-ext-wght-normal.woff2",
+        "roboto-greek-wght-normal.woff2",
+        "roboto-math-wght-normal.woff2",
+        "roboto-symbols-wght-normal.woff2",
+        "roboto-vietnamese-wght-normal.woff2",
+        "roboto-latin-ext-wght-normal.woff2",
+        "roboto-latin-wght-normal.woff2"
+      ]
+    },
+    {
+      "package": "@fontsource-variable/roboto-flex",
+      "version": "5.3.0",
+      "license": "OFL-1.1",
+      "source": "https://registry.npmjs.org/@fontsource-variable/roboto-flex/-/roboto-flex-5.3.0.tgz",
+      "integrity": "sha512-bOxckUy0qXNRjhV6e4pcHGSvptix4ZRD1uaj5Za8h+p3qrb2GL4U4TQdpVmPSy0SmqwldfD+JJqEKdF68EyiAw==",
+      "files": [
+        "roboto-flex-cyrillic-ext-wght-normal.woff2",
+        "roboto-flex-cyrillic-wght-normal.woff2",
+        "roboto-flex-greek-wght-normal.woff2",
+        "roboto-flex-vietnamese-wght-normal.woff2",
+        "roboto-flex-latin-ext-wght-normal.woff2",
+        "roboto-flex-latin-wght-normal.woff2"
+      ]
+    },
+    {
+      "package": "@fontsource-variable/roboto-serif",
+      "version": "5.3.0",
+      "license": "OFL-1.1",
+      "source": "https://registry.npmjs.org/@fontsource-variable/roboto-serif/-/roboto-serif-5.3.0.tgz",
+      "integrity": "sha512-MOZEZkrYvhCPuUPsZeWzOeXPlEbfhHUgg7nPIiUWVZnJt3TF2CU1Gpavlf1YIjl0SejsD0OJOExAYXg48D47bw==",
+      "files": [
+        "roboto-serif-cyrillic-ext-wght-normal.woff2",
+        "roboto-serif-cyrillic-wght-normal.woff2",
+        "roboto-serif-vietnamese-wght-normal.woff2",
+        "roboto-serif-latin-ext-wght-normal.woff2",
+        "roboto-serif-latin-wght-normal.woff2"
+      ]
+    },
+    {
+      "package": "@fontsource-variable/noto-sans-sc",
+      "version": "5.3.1",
+      "license": "OFL-1.1",
+      "source": "https://registry.npmjs.org/@fontsource-variable/noto-sans-sc/-/noto-sans-sc-5.3.1.tgz",
+      "integrity": "sha512-UB96JJ17HyD5ehEU7Em0hDdh7fvTMB4B4Hzmq5c4QaNwwSLqTrdM2S+coySeBqCkXwh0DxqXT0b0wMrmzorFpQ==",
+      "files": [
+        "noto-sans-sc-4-wght-normal.woff2",
+        "noto-sans-sc-5-wght-normal.woff2",
+        "noto-sans-sc-6-wght-normal.woff2",
+        "noto-sans-sc-21-wght-normal.woff2",
+        "noto-sans-sc-22-wght-normal.woff2",
+        "noto-sans-sc-23-wght-normal.woff2",
+        "noto-sans-sc-24-wght-normal.woff2",
+        "noto-sans-sc-25-wght-normal.woff2",
+        "noto-sans-sc-26-wght-normal.woff2",
+        "noto-sans-sc-27-wght-normal.woff2",
+        "noto-sans-sc-28-wght-normal.woff2",
+        "noto-sans-sc-29-wght-normal.woff2",
+        "noto-sans-sc-30-wght-normal.woff2",
+        "noto-sans-sc-31-wght-normal.woff2",
+        "noto-sans-sc-32-wght-normal.woff2",
+        "noto-sans-sc-33-wght-normal.woff2",
+        "noto-sans-sc-34-wght-normal.woff2",
+        "noto-sans-sc-35-wght-normal.woff2",
+        "noto-sans-sc-36-wght-normal.woff2",
+        "noto-sans-sc-37-wght-normal.woff2",
+        "noto-sans-sc-38-wght-normal.woff2",
+        "noto-sans-sc-39-wght-normal.woff2",
+        "noto-sans-sc-40-wght-normal.woff2",
+        "noto-sans-sc-41-wght-normal.woff2",
+        "noto-sans-sc-42-wght-normal.woff2",
+        "noto-sans-sc-43-wght-normal.woff2",
+        "noto-sans-sc-44-wght-normal.woff2",
+        "noto-sans-sc-45-wght-normal.woff2",
+        "noto-sans-sc-46-wght-normal.woff2",
+        "noto-sans-sc-47-wght-normal.woff2",
+        "noto-sans-sc-48-wght-normal.woff2",
+        "noto-sans-sc-49-wght-normal.woff2",
+        "noto-sans-sc-50-wght-normal.woff2",
+        "noto-sans-sc-51-wght-normal.woff2",
+        "noto-sans-sc-52-wght-normal.woff2",
+        "noto-sans-sc-53-wght-normal.woff2",
+        "noto-sans-sc-54-wght-normal.woff2",
+        "noto-sans-sc-55-wght-normal.woff2",
+        "noto-sans-sc-56-wght-normal.woff2",
+        "noto-sans-sc-57-wght-normal.woff2",
+        "noto-sans-sc-58-wght-normal.woff2",
+        "noto-sans-sc-59-wght-normal.woff2",
+        "noto-sans-sc-60-wght-normal.woff2",
+        "noto-sans-sc-61-wght-normal.woff2",
+        "noto-sans-sc-62-wght-normal.woff2",
+        "noto-sans-sc-63-wght-normal.woff2",
+        "noto-sans-sc-64-wght-normal.woff2",
+        "noto-sans-sc-65-wght-normal.woff2",
+        "noto-sans-sc-66-wght-normal.woff2",
+        "noto-sans-sc-67-wght-normal.woff2",
+        "noto-sans-sc-68-wght-normal.woff2",
+        "noto-sans-sc-69-wght-normal.woff2",
+        "noto-sans-sc-70-wght-normal.woff2",
+        "noto-sans-sc-71-wght-normal.woff2",
+        "noto-sans-sc-72-wght-normal.woff2",
+        "noto-sans-sc-73-wght-normal.woff2",
+        "noto-sans-sc-74-wght-normal.woff2",
+        "noto-sans-sc-75-wght-normal.woff2",
+        "noto-sans-sc-76-wght-normal.woff2",
+        "noto-sans-sc-77-wght-normal.woff2",
+        "noto-sans-sc-78-wght-normal.woff2",
+        "noto-sans-sc-79-wght-normal.woff2",
+        "noto-sans-sc-80-wght-normal.woff2",
+        "noto-sans-sc-81-wght-normal.woff2",
+        "noto-sans-sc-82-wght-normal.woff2",
+        "noto-sans-sc-83-wght-normal.woff2",
+        "noto-sans-sc-84-wght-normal.woff2",
+        "noto-sans-sc-85-wght-normal.woff2",
+        "noto-sans-sc-86-wght-normal.woff2",
+        "noto-sans-sc-87-wght-normal.woff2",
+        "noto-sans-sc-88-wght-normal.woff2",
+        "noto-sans-sc-89-wght-normal.woff2",
+        "noto-sans-sc-90-wght-normal.woff2",
+        "noto-sans-sc-91-wght-normal.woff2",
+        "noto-sans-sc-97-wght-normal.woff2",
+        "noto-sans-sc-98-wght-normal.woff2",
+        "noto-sans-sc-99-wght-normal.woff2",
+        "noto-sans-sc-100-wght-normal.woff2",
+        "noto-sans-sc-101-wght-normal.woff2",
+        "noto-sans-sc-102-wght-normal.woff2",
+        "noto-sans-sc-103-wght-normal.woff2",
+        "noto-sans-sc-104-wght-normal.woff2",
+        "noto-sans-sc-105-wght-normal.woff2",
+        "noto-sans-sc-106-wght-normal.woff2",
+        "noto-sans-sc-107-wght-normal.woff2",
+        "noto-sans-sc-108-wght-normal.woff2",
+        "noto-sans-sc-109-wght-normal.woff2",
+        "noto-sans-sc-110-wght-normal.woff2",
+        "noto-sans-sc-111-wght-normal.woff2",
+        "noto-sans-sc-112-wght-normal.woff2",
+        "noto-sans-sc-113-wght-normal.woff2",
+        "noto-sans-sc-114-wght-normal.woff2",
+        "noto-sans-sc-115-wght-normal.woff2",
+        "noto-sans-sc-116-wght-normal.woff2",
+        "noto-sans-sc-117-wght-normal.woff2",
+        "noto-sans-sc-118-wght-normal.woff2",
+        "noto-sans-sc-119-wght-normal.woff2",
+        "noto-sans-sc-cyrillic-wght-normal.woff2",
+        "noto-sans-sc-vietnamese-wght-normal.woff2",
+        "noto-sans-sc-latin-ext-wght-normal.woff2",
+        "noto-sans-sc-latin-wght-normal.woff2"
+      ]
+    },
+    {
+      "package": "google/material-design-icons",
+      "version": "49d4db35df873165d6bd6ba09b063c7dafbac2f4",
+      "license": "Apache-2.0",
+      "source": "https://github.com/google/material-design-icons/tree/49d4db35df873165d6bd6ba09b063c7dafbac2f4/variablefont",
+      "files": [
+        "material-symbols-rounded.woff2",
+        "material-symbols-rounded.codepoints"
+      ]
+    }
+  ],
+  "files": {
+    "fonts.css": {
+      "sha256": "f3f9c627d092a6a10215bc6c863eb8d38051293dfaabba0cfa3c8d25fa1ff7df",
+      "bytes": 110970
+    },
+    "material-symbols-rounded.woff2": {
+      "sha256": "1f8b34a4a7c54eb110b4e51f5233b3d459cbbec2f7ef4e3e1047751918ec5a66",
+      "bytes": 5397756
+    },
+    "noto-sans-sc-100-wght-normal.woff2": {
+      "sha256": "2c5ddf9cdfad73afb5235e06bc8ed3b5c627849200d673978148700c78f84160",
+      "bytes": 64376
+    },
+    "noto-sans-sc-101-wght-normal.woff2": {
+      "sha256": "a33308bf652e64ac2884bfe830996e933322b939b915bb823fd47383580664ad",
+      "bytes": 58028
+    },
+    "noto-sans-sc-102-wght-normal.woff2": {
+      "sha256": "4ea85e144cb385ce086b21b307730d3fdb70a587aaf350b12d0c4c2f13e66d27",
+      "bytes": 60516
+    },
+    "noto-sans-sc-103-wght-normal.woff2": {
+      "sha256": "1bfdb1f001006c62434577b60064c3ec0562e4a68191acbc7feeba4b303bf095",
+      "bytes": 63732
+    },
+    "noto-sans-sc-104-wght-normal.woff2": {
+      "sha256": "1e716b78655e396075808be52a9e749df1b6b5d17bd0ccedc6dcb89586903737",
+      "bytes": 61404
+    },
+    "noto-sans-sc-105-wght-normal.woff2": {
+      "sha256": "ade910a27a4bd65baed59a8a86a3a6a80f6083daa7123bb9ff32da15e56fda9d",
+      "bytes": 61612
+    },
+    "noto-sans-sc-106-wght-normal.woff2": {
+      "sha256": "d31c838eb0e43043109bd6ddc23c295c340fc50f9a2f2381076ae8c0fa7f980b",
+      "bytes": 62444
+    },
+    "noto-sans-sc-107-wght-normal.woff2": {
+      "sha256": "d8d9b5fd2b266fdf3f6855444e7769e54f39806e48994e7fe5e0c4ace9553c81",
+      "bytes": 60828
+    },
+    "noto-sans-sc-108-wght-normal.woff2": {
+      "sha256": "12fcc1175cb6370acb056743f4fea7fdde85b6376ada2f15dfbab59f02b45988",
+      "bytes": 64340
+    },
+    "noto-sans-sc-109-wght-normal.woff2": {
+      "sha256": "85ebc9985c665dd55346ebc78b93f8d8ef6ff972d78afc288b75d697a242d780",
+      "bytes": 60208
+    },
+    "noto-sans-sc-110-wght-normal.woff2": {
+      "sha256": "51785f4a4d2a011d877052cab1bc4c36cabcc4e186ed0176214061c174b7f024",
+      "bytes": 61188
+    },
+    "noto-sans-sc-111-wght-normal.woff2": {
+      "sha256": "aaa67a70f5e8b351c558e32345093fdfd86f089726b3b86d84b58de6a2475104",
+      "bytes": 62400
+    },
+    "noto-sans-sc-112-wght-normal.woff2": {
+      "sha256": "34e76675ceffd89824fb130d7649dc92df9e57843a73b9996d405baa2ff9ecff",
+      "bytes": 57460
+    },
+    "noto-sans-sc-113-wght-normal.woff2": {
+      "sha256": "40290d98d5c121bdbb1909e39c9c0242eae3a5a88f1bbe302857e525b90056df",
+      "bytes": 58428
+    },
+    "noto-sans-sc-114-wght-normal.woff2": {
+      "sha256": "c49b2eb658a0c2d76de9a279945de30bf32acd8fdd6d56cf84aea9c6b14aacae",
+      "bytes": 57740
+    },
+    "noto-sans-sc-115-wght-normal.woff2": {
+      "sha256": "6c0cda055b31066fb60058ac30ede37f6f9ca02265c2e1a84aee81175f567fa8",
+      "bytes": 56264
+    },
+    "noto-sans-sc-116-wght-normal.woff2": {
+      "sha256": "002e502515bee8b9efa1b17abf7e52b51d4cfa20538ae2b2bd82ac52e1153f5e",
+      "bytes": 52796
+    },
+    "noto-sans-sc-117-wght-normal.woff2": {
+      "sha256": "3d7ced7101c03dfa9bf0e60460a1b91fc6f1166fb33f718506e8110bb12e74a7",
+      "bytes": 52228
+    },
+    "noto-sans-sc-118-wght-normal.woff2": {
+      "sha256": "f26330ce4056382832c0f2a0d7f411e0b4140fc87937e8865d91664410cfb98c",
+      "bytes": 45992
+    },
+    "noto-sans-sc-119-wght-normal.woff2": {
+      "sha256": "09b9fa5a9521fbeccb8267a5abe7443c83cbe25b32eb15b00de316d913235525",
+      "bytes": 76324
+    },
+    "noto-sans-sc-21-wght-normal.woff2": {
+      "sha256": "0c5afc8752b151a444ccb3b21d740cc8e429347ea52bd4cf9d22b73937624bbf",
+      "bytes": 11276
+    },
+    "noto-sans-sc-22-wght-normal.woff2": {
+      "sha256": "b15b23e18f7b765bd08d12d13210c0af8d32bee34712bc3152d0b386d043ec04",
+      "bytes": 65220
+    },
+    "noto-sans-sc-23-wght-normal.woff2": {
+      "sha256": "a8f6664d83439cd5d329e9b35a54fb4d9d3786e80d3eaebbaeac24e3acf950fc",
+      "bytes": 56700
+    },
+    "noto-sans-sc-24-wght-normal.woff2": {
+      "sha256": "fc59757db66129052cd8e4248045f92f8273b37f719be2a058a55859de190a0e",
+      "bytes": 62552
+    },
+    "noto-sans-sc-25-wght-normal.woff2": {
+      "sha256": "074e6162a8ba4f9cf25881da25ce522bb949c1e2516142746daf85471bc48a9c",
+      "bytes": 58224
+    },
+    "noto-sans-sc-26-wght-normal.woff2": {
+      "sha256": "68074245ba1ea9745cad9cf3780b69c9def3568891296e44d60e070e45df7b7a",
+      "bytes": 50744
+    },
+    "noto-sans-sc-27-wght-normal.woff2": {
+      "sha256": "4e0dafaa26d924f5612a138a34a817aa06b8f72bad9798fe64d221fb13001d31",
+      "bytes": 47324
+    },
+    "noto-sans-sc-28-wght-normal.woff2": {
+      "sha256": "31bb7facf7a62ee189026f7ff725b9c4639c712762036394c2996db140549746",
+      "bytes": 50016
+    },
+    "noto-sans-sc-29-wght-normal.woff2": {
+      "sha256": "67d137f738bc8294a0365f60661e31b33a6e534d56d7e5ed6982d5e6ffa5663c",
+      "bytes": 53848
+    },
+    "noto-sans-sc-30-wght-normal.woff2": {
+      "sha256": "12acd771479c93c76f064a81447266c349d6a33d2f1893d5413c6303b1156fef",
+      "bytes": 54416
+    },
+    "noto-sans-sc-31-wght-normal.woff2": {
+      "sha256": "def5793483c7abc922de654bc16262646c9ae263819e663990b52fd56a3d5d69",
+      "bytes": 47084
+    },
+    "noto-sans-sc-32-wght-normal.woff2": {
+      "sha256": "2d884d1cfd97c6f72518a2d690573e4130b0b707423f25963d7cc975388adf3e",
+      "bytes": 52368
+    },
+    "noto-sans-sc-33-wght-normal.woff2": {
+      "sha256": "02fd273486d8e0c876b3b5d2c3c131b9ce85058196ee3ed77c7d38a7a10e139c",
+      "bytes": 47332
+    },
+    "noto-sans-sc-34-wght-normal.woff2": {
+      "sha256": "13a18e443a4bf6557e252a63061914ce19c4be018c9b16eaf5c75842ee88baf5",
+      "bytes": 46748
+    },
+    "noto-sans-sc-35-wght-normal.woff2": {
+      "sha256": "68413e3f3e5b912efd25702281aae9acb37c9920bb7bb941404506ab520add49",
+      "bytes": 50464
+    },
+    "noto-sans-sc-36-wght-normal.woff2": {
+      "sha256": "21b841e271833161fe5f70a2052399e79faac029667abdcdffe81f260f2ce6b5",
+      "bytes": 41692
+    },
+    "noto-sans-sc-37-wght-normal.woff2": {
+      "sha256": "bcbdf5fd7899c7ed192a0c89de9c6c92477be74b8c2343e74914359bfd32a10f",
+      "bytes": 53356
+    },
+    "noto-sans-sc-38-wght-normal.woff2": {
+      "sha256": "ca375e4a6ecc230333656ad11081b26e6b8f3240f4160e22f75150d4fdddcc9f",
+      "bytes": 54424
+    },
+    "noto-sans-sc-39-wght-normal.woff2": {
+      "sha256": "e73a947fa1fb1a7385e9d654fa0fe7dd8a2241e9b73282f67941c650c94de326",
+      "bytes": 51616
+    },
+    "noto-sans-sc-4-wght-normal.woff2": {
+      "sha256": "29634170d5eb07f460a9eb1b2d0ef126ad0b5ef705e4c25191fd5794dc930d4d",
+      "bytes": 3764
+    },
+    "noto-sans-sc-40-wght-normal.woff2": {
+      "sha256": "2f186187cfd9a546d199aac41fbaed1241a47a7d5aad1804f98127506af80340",
+      "bytes": 46432
+    },
+    "noto-sans-sc-41-wght-normal.woff2": {
+      "sha256": "7e2a21f95e969165ff32e2fdab8422b489d2c7b0f899f69bfc83d71872cde2af",
+      "bytes": 36284
+    },
+    "noto-sans-sc-42-wght-normal.woff2": {
+      "sha256": "c53279f786dde3590baf0343d080fad8c7bd976e9dccecd2adea893cfad2f99a",
+      "bytes": 45432
+    },
+    "noto-sans-sc-43-wght-normal.woff2": {
+      "sha256": "a98ffa0839e353eb7e768084e27892596616f6a3d8bb65c94202898bccb1fd68",
+      "bytes": 46488
+    },
+    "noto-sans-sc-44-wght-normal.woff2": {
+      "sha256": "aa1a541dfacfcad0c66fb7f9dd4f9c12ce729d98311336c634702d066aabbbc2",
+      "bytes": 54096
+    },
+    "noto-sans-sc-45-wght-normal.woff2": {
+      "sha256": "ea12aaa5635e53eaf7429500be57e9e8a6030e0906f985426412a1303761f77f",
+      "bytes": 67436
+    },
+    "noto-sans-sc-46-wght-normal.woff2": {
+      "sha256": "d4a75aa10eb4487dcd94ff2009ef0f185d35f0e3264fa87532887c5c1517c816",
+      "bytes": 57520
+    },
+    "noto-sans-sc-47-wght-normal.woff2": {
+      "sha256": "d5c48bd3b5502918adf253c96909f27be4eda7653fc0254a6564557b516cb2e1",
+      "bytes": 55972
+    },
+    "noto-sans-sc-48-wght-normal.woff2": {
+      "sha256": "c4f53f8b05fa6350ac20f8a12b550f9634ed31b084dc50b1263f2080e392b9f7",
+      "bytes": 50616
+    },
+    "noto-sans-sc-49-wght-normal.woff2": {
+      "sha256": "2418a76f14f6299b160af41cd283ed529b0030e2448b2ec11895ea5009561e25",
+      "bytes": 52768
+    },
+    "noto-sans-sc-5-wght-normal.woff2": {
+      "sha256": "08f7b17fb6a88382277dfa1b6969f1f0b73a1f87819713849bb9e1ff6017088e",
+      "bytes": 20044
+    },
+    "noto-sans-sc-50-wght-normal.woff2": {
+      "sha256": "050cbf869048801588356d05f1145c601ddb9063a9e9fd241bbd0997a5ca263f",
+      "bytes": 45724
+    },
+    "noto-sans-sc-51-wght-normal.woff2": {
+      "sha256": "48810df68807cb9a06052daa52495183575373dc1f3294cce7739a6f37ff25cf",
+      "bytes": 41476
+    },
+    "noto-sans-sc-52-wght-normal.woff2": {
+      "sha256": "bf40713c12d0ae841b4cbe9d487724e4ee780fdb84844a96ba8ebae6b79a3191",
+      "bytes": 51772
+    },
+    "noto-sans-sc-53-wght-normal.woff2": {
+      "sha256": "13b6821eb6534f1ac72a4bab506de7012bec7fe0b9bb0a73733d5c798dd45e29",
+      "bytes": 43284
+    },
+    "noto-sans-sc-54-wght-normal.woff2": {
+      "sha256": "db60ee4c755151c036004e39bde39fa9676c6a9d1753d9842ae1a7b2e5899b83",
+      "bytes": 51816
+    },
+    "noto-sans-sc-55-wght-normal.woff2": {
+      "sha256": "70105493871b782981352a0cf696487afc098a69a4708d87a7931607fe15a128",
+      "bytes": 47948
+    },
+    "noto-sans-sc-56-wght-normal.woff2": {
+      "sha256": "cc5fe9a6dedd91e7b95482713b12c84d99a04f90d5124e50db3efa9f2450923f",
+      "bytes": 53332
+    },
+    "noto-sans-sc-57-wght-normal.woff2": {
+      "sha256": "3a4bddf6442271be898390e29e344183f5f10a97eefa04595c9537f535f34927",
+      "bytes": 55348
+    },
+    "noto-sans-sc-58-wght-normal.woff2": {
+      "sha256": "b4a952b513ca0e1b594a856e5398d1e40d69b0bf220825210955fde747faa8d0",
+      "bytes": 57468
+    },
+    "noto-sans-sc-59-wght-normal.woff2": {
+      "sha256": "0557109d55c77ff9c9b5c9732d732c5328bd0b61038cffe611d9d62b26ded420",
+      "bytes": 47504
+    },
+    "noto-sans-sc-6-wght-normal.woff2": {
+      "sha256": "675ff09731b49aeff9031c6d8edb3d54766aec64e4c6c699be5766729e4dad98",
+      "bytes": 11388
+    },
+    "noto-sans-sc-60-wght-normal.woff2": {
+      "sha256": "105d09095364787b4eef08ecd4faa975d66ad3ce2be43bb968dd37b9285e6667",
+      "bytes": 41300
+    },
+    "noto-sans-sc-61-wght-normal.woff2": {
+      "sha256": "21c21d2375925f742573edc50e3bca85a63350bf1d5d566d2d762f8ce2b259d9",
+      "bytes": 45096
+    },
+    "noto-sans-sc-62-wght-normal.woff2": {
+      "sha256": "d532c89a0da063c68ce871a7f85fa75448efc3089335e012f107d80618512fd4",
+      "bytes": 58956
+    },
+    "noto-sans-sc-63-wght-normal.woff2": {
+      "sha256": "0897654d316342cdf37bb3d16fcf1a51fdcc38fcf1fb39880b5d3f17e87bf7de",
+      "bytes": 49052
+    },
+    "noto-sans-sc-64-wght-normal.woff2": {
+      "sha256": "d490960a491521936b84a4be078a9570444960a2dc73c584b802d2c9c8fba1c1",
+      "bytes": 41408
+    },
+    "noto-sans-sc-65-wght-normal.woff2": {
+      "sha256": "086958b9f441a2ba9fca76e9ac4924bc4acb60559bd5620d348c707ff154ee83",
+      "bytes": 41392
+    },
+    "noto-sans-sc-66-wght-normal.woff2": {
+      "sha256": "50c8a455f282618211dacd6a0a30c1dee510d6d46eea9be79937b24e69cb0353",
+      "bytes": 52620
+    },
+    "noto-sans-sc-67-wght-normal.woff2": {
+      "sha256": "54fc8c9eca1c929480b2c090907dfd9d42875cec49989b0737af2b6a60097f29",
+      "bytes": 52464
+    },
+    "noto-sans-sc-68-wght-normal.woff2": {
+      "sha256": "3ed406ceb43b6f73a6a42ad9e8b2a9aab96fd6603bab5b73a908ca53f0d354a8",
+      "bytes": 41380
+    },
+    "noto-sans-sc-69-wght-normal.woff2": {
+      "sha256": "c7d1f5b0f95f358dee4cf9e76eda5c0465eb9d0f4e21a13ef39d0cf8761e5b9d",
+      "bytes": 55520
+    },
+    "noto-sans-sc-70-wght-normal.woff2": {
+      "sha256": "8474823a5264bfdee208fd16e2e5f3fe689e8eb18941446678426dc5f1264d19",
+      "bytes": 42080
+    },
+    "noto-sans-sc-71-wght-normal.woff2": {
+      "sha256": "734da1dcc260ca6cc29c9e42078125ae8e4583fbc1f7cc76d82572a73767f04d",
+      "bytes": 47768
+    },
+    "noto-sans-sc-72-wght-normal.woff2": {
+      "sha256": "71d3da5b2d0e05b8899e271aaa49982fa73a589168be26a8350ff6f79f20bfd7",
+      "bytes": 46916
+    },
+    "noto-sans-sc-73-wght-normal.woff2": {
+      "sha256": "92f8b99dc1a79089d18b1684447e31ef62abf48de736555cf5840b781aeb9d56",
+      "bytes": 39096
+    },
+    "noto-sans-sc-74-wght-normal.woff2": {
+      "sha256": "5c8faf77fe0277b9e59904396fdf3fe24088bcb2decfc5729895b279c53754f6",
+      "bytes": 56260
+    },
+    "noto-sans-sc-75-wght-normal.woff2": {
+      "sha256": "216c1c94ee016db46f8d1dc5c51f402215dbf9013fbf9f60f3db3901f9a3b035",
+      "bytes": 43824
+    },
+    "noto-sans-sc-76-wght-normal.woff2": {
+      "sha256": "8a31272bf31f9340747866ad1a59ff6073bf92fe802e2ba5a531f6a8aac2a42b",
+      "bytes": 48240
+    },
+    "noto-sans-sc-77-wght-normal.woff2": {
+      "sha256": "bc249f82f40ec61d6ec096c748603fdb4e946adaf659392b06c6810169e81513",
+      "bytes": 36664
+    },
+    "noto-sans-sc-78-wght-normal.woff2": {
+      "sha256": "26210c38ccee9b53194481bed1dfc1aa4f74810d5672b2e7ed6a2e44b169835d",
+      "bytes": 48916
+    },
+    "noto-sans-sc-79-wght-normal.woff2": {
+      "sha256": "db79df334235f3d72cc0a7e625bfee1c3d6a76104af15e0814c4926ceee6188e",
+      "bytes": 41064
+    },
+    "noto-sans-sc-80-wght-normal.woff2": {
+      "sha256": "c9ce6e0654379a2dd291a6f29323ff2d7f06156389ffb3e4d087a9d211887a6b",
+      "bytes": 32448
+    },
+    "noto-sans-sc-81-wght-normal.woff2": {
+      "sha256": "9958d614924fa54de4f661febd02c1de787ef640d58970e4d928e1ecd7c17990",
+      "bytes": 47504
+    },
+    "noto-sans-sc-82-wght-normal.woff2": {
+      "sha256": "2129264ef35c203e3a2c2bc16abc437c110c57006d108ff107ad775dc7ea1e39",
+      "bytes": 46008
+    },
+    "noto-sans-sc-83-wght-normal.woff2": {
+      "sha256": "24a037cbb07cb4de1f92993a9ceda16ba4483f1d63f6f529ea26ae44f01243fd",
+      "bytes": 43356
+    },
+    "noto-sans-sc-84-wght-normal.woff2": {
+      "sha256": "e1b9b9aee81a74fc4ec19e1709c64a0042d9d898a2f00f6c3b2012564b6a4783",
+      "bytes": 32516
+    },
+    "noto-sans-sc-85-wght-normal.woff2": {
+      "sha256": "cce97c39b9304c87e55ed84d511d479afd3343b91c04b3ac7bdc5beb9ecf709d",
+      "bytes": 26768
+    },
+    "noto-sans-sc-86-wght-normal.woff2": {
+      "sha256": "55fd1a42ab8ace744691b59c535499ad22b22c7c98b1d69a22fe101a2cd9b0e9",
+      "bytes": 33428
+    },
+    "noto-sans-sc-87-wght-normal.woff2": {
+      "sha256": "40292a14f8f52accb05252b7ec7c68e00f35781d2a726223bec1685eee6312b5",
+      "bytes": 7956
+    },
+    "noto-sans-sc-88-wght-normal.woff2": {
+      "sha256": "008f38db74bc1c346ba8f4d6065dd41d0fe33a4ed2f9909cb880b81c5a3f9334",
+      "bytes": 7228
+    },
+    "noto-sans-sc-89-wght-normal.woff2": {
+      "sha256": "74a75243aa93eb61367a28d217ce82b76c6cf9e86d0f23fd96708bfd91b68f46",
+      "bytes": 10792
+    },
+    "noto-sans-sc-90-wght-normal.woff2": {
+      "sha256": "80d51f95afbebcbed0cc53985fbce43eec3a37c8ec88b08d316c56a32aa77843",
+      "bytes": 9224
+    },
+    "noto-sans-sc-91-wght-normal.woff2": {
+      "sha256": "7bf857d9d1285675fe572e64f968ae1f3213da7654ffd335633fb5b39493c057",
+      "bytes": 8616
+    },
+    "noto-sans-sc-97-wght-normal.woff2": {
+      "sha256": "7671f7b32d4c5c11ba72df9e6b9a18a6441f863aade2623ac0562ebd34b82bc7",
+      "bytes": 2072
+    },
+    "noto-sans-sc-98-wght-normal.woff2": {
+      "sha256": "94e55b60e87bfb909709592144002c0b10a4214612ea512b38bb719c9ef45c49",
+      "bytes": 3412
+    },
+    "noto-sans-sc-99-wght-normal.woff2": {
+      "sha256": "6b2d1065f737c83608088c2e241c605683d94c6160121ca976496507ebc6cc94",
+      "bytes": 9696
+    },
+    "noto-sans-sc-cyrillic-wght-normal.woff2": {
+      "sha256": "811e869a2b23ff46086eeff6fa59185bb1aa982f5bcd8d34db51e10ea8e5f7e1",
+      "bytes": 9896
+    },
+    "noto-sans-sc-latin-ext-wght-normal.woff2": {
+      "sha256": "0049f7154dcc3fa0d585f80383b232cb9e497084ee77e10519747d668db3cb55",
+      "bytes": 8128
+    },
+    "noto-sans-sc-latin-wght-normal.woff2": {
+      "sha256": "cf5346b0747cd71123c8f74da0ad41fc0f63eda07b9d8e0382e00882ae743733",
+      "bytes": 24880
+    },
+    "noto-sans-sc-vietnamese-wght-normal.woff2": {
+      "sha256": "310e65da63933201c3381173106418442de6441742594001290b4056abbc9ed8",
+      "bytes": 8976
+    },
+    "roboto-cyrillic-ext-wght-normal.woff2": {
+      "sha256": "01f94d674db55952c35898fa4da22c3e7065c3cc4dbbcc9cb7beb8b6b017fbc9",
+      "bytes": 36652
+    },
+    "roboto-cyrillic-wght-normal.woff2": {
+      "sha256": "481dd0c01e6bbb129fd147eb5d8571016193cba141c4627ca60ceabdb5a46ea8",
+      "bytes": 23664
+    },
+    "roboto-flex-cyrillic-ext-wght-normal.woff2": {
+      "sha256": "09837dc0d8ecb711b40c5c58685986052211d955428ea467f54421f1ea86c0c9",
+      "bytes": 10392
+    },
+    "roboto-flex-cyrillic-wght-normal.woff2": {
+      "sha256": "c4e64ccd19eee5fca87557f04eec410ef0e69b16baf2a577219f40f6014bbbb2",
+      "bytes": 15652
+    },
+    "roboto-flex-greek-wght-normal.woff2": {
+      "sha256": "a7b3fbca30df516e1789451046bc59ed8d4836aa016bbdb50527a110242e6d10",
+      "bytes": 11436
+    },
+    "roboto-flex-latin-ext-wght-normal.woff2": {
+      "sha256": "860475bc6d859474547084d6b7ab158d2c6a107b024abe7d9831faf968e9ec83",
+      "bytes": 23480
+    },
+    "roboto-flex-latin-wght-normal.woff2": {
+      "sha256": "8aabd65a22003f488ba7d2da8a8155a7f90e195ab2a11cd006615d00a0ee5eff",
+      "bytes": 34320
+    },
+    "roboto-flex-vietnamese-wght-normal.woff2": {
+      "sha256": "65b5dfa63cf775fa416f136e679f08150ea65f013a44f5b54027dc2506f0740f",
+      "bytes": 9772
+    },
+    "roboto-greek-ext-wght-normal.woff2": {
+      "sha256": "ec7769b089813996276482bbe7017adfffdd6c7543fd1f76244e2ffc1138ed86",
+      "bytes": 4348
+    },
+    "roboto-greek-wght-normal.woff2": {
+      "sha256": "97fbf7bd0b4579e632392a4f483acdae73cbf59ad90c1e5d2c5ec4044c377fce",
+      "bytes": 17624
+    },
+    "roboto-latin-ext-wght-normal.woff2": {
+      "sha256": "cedb374b05a35034cf96db185db4eeb8f8ce49e1a56197673702ff11b5533d6e",
+      "bytes": 29392
+    },
+    "roboto-latin-wght-normal.woff2": {
+      "sha256": "1404ca348bd75ef836f4dd8b6f2cc719458642d1237c368296b2fc652dca47dc",
+      "bytes": 43136
+    },
+    "roboto-math-wght-normal.woff2": {
+      "sha256": "7cb4281a0ccc84cc18617842c639fc66541cbef94a9dd245c754700210b4fcec",
+      "bytes": 41348
+    },
+    "roboto-serif-cyrillic-ext-wght-normal.woff2": {
+      "sha256": "0fc4dec2dc63343460ea8106f7f4b8f216e2d5f43831e06e3ec228ba34984d4e",
+      "bytes": 15696
+    },
+    "roboto-serif-cyrillic-wght-normal.woff2": {
+      "sha256": "c00ae8496d3d5f5c8fc892b0d1092435e4dd77b1e3c040d7370a159ddc2c664c",
+      "bytes": 32040
+    },
+    "roboto-serif-latin-ext-wght-normal.woff2": {
+      "sha256": "90626de112742b75e72b27865650de397eccf6845b22b577b0283b9cbfda83fc",
+      "bytes": 49848
+    },
+    "roboto-serif-latin-wght-normal.woff2": {
+      "sha256": "a32deb82e55d4bcb083e09dbb4da3198011ce0e9f919877179e8c2bca23a9042",
+      "bytes": 66104
+    },
+    "roboto-serif-vietnamese-wght-normal.woff2": {
+      "sha256": "0e355d13fa3a5db963677b0698bf62490dcf6b4bbe8710a91804bb684cea60eb",
+      "bytes": 13176
+    },
+    "roboto-symbols-wght-normal.woff2": {
+      "sha256": "2addf2d86d7a5778653b36d551e97a39da52855f82fac7461cfc1bd86d460aed",
+      "bytes": 20556
+    },
+    "roboto-vietnamese-wght-normal.woff2": {
+      "sha256": "0b60bbe04e9c479444b31270a72179f53e400beee57b7dd176c08e5e2e716831",
+      "bytes": 14340
+    }
+  },
+  "totalRuntimeBytes": 10522246,
+  "modifications": "Font binaries unchanged. CSS family aliases match application names; URLs are local and font-display is block."
+}

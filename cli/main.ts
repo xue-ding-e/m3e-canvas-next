@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 import { readFile, stat } from "node:fs/promises";
 import { HeadlessError, MAX_PROJECT_BYTES, parseProject, projectPrompt, projectShareLink, type PromptOptions } from "../lib/headless";
+import { runRenderCommand, RenderError } from "./render";
 import { applyOperations, createProject, designCatalog, inspectProject } from "../lib/design";
 import type { Lang } from "../lib/i18n";
 
 const HELP = `M3E Canvas headless CLI
 
 Usage:
+  node dist-headless/cli/main.js render --input project.json --output shot.png
+      --build-dir out --frame home --width 800 --height 900 [--font-mode system]
   node dist-headless/cli/main.js create [options.json|-]
   node dist-headless/cli/main.js catalog [--lang en|ja|zh|ko]
   node dist-headless/cli/main.js inspect [file|-]
@@ -30,7 +33,7 @@ history are omitted. Other content remains; this is not a privacy scrubber.
 Input is limited to 1 MiB and 64 nesting levels.
 
 Exit codes: 0 success; 2 usage/options; 3 invalid JSON/project; 4 input/output;
-5 unexpected failure. --help and --version do not read input.
+5 unexpected failure; 6 renderer unavailable. --help and --version do not read input.
 `;
 
 class CliError extends Error {
@@ -64,6 +67,7 @@ async function main() {
   const args = process.argv.slice(2);
   if (args.length === 0 || (args.length === 1 && ["--help", "-h"].includes(args[0])) || (args.length === 2 && ["validate", "prompt", "share", "create", "catalog", "inspect", "apply"].includes(args[0]) && ["--help", "-h"].includes(args[1]))) { process.stdout.write(HELP); return; }
   if (args.length === 1 && args[0] === "--version") { process.stdout.write("m3e-canvas 0.1.0\n"); return; }
+  if (args[0] === "render") { await runRenderCommand(args.slice(1)); return; }
   const { command, flags, file } = argumentsOf(args);
   if (command === "create" && file === "-" && process.stdin.isTTY) { process.stdout.write(JSON.stringify(createProject(), null, 2) + "\n"); return; }
   if (command === "catalog") {
@@ -116,6 +120,10 @@ async function main() {
 }
 
 function fail(error: unknown) {
+  if (error instanceof RenderError) {
+    process.stderr.write(JSON.stringify({ error: { code: error.code, message: error.message, phase: error.phase, retryable: error.retryable } }) + "\n");
+    process.exitCode = error.exitCode; return;
+  }
   const code = error instanceof HeadlessError || error instanceof CliError ? error.code : "INTERNAL_ERROR";
   const exitCode = error instanceof CliError ? error.exitCode : error instanceof HeadlessError ? (["INVALID_JSON", "INVALID_PROJECT"].includes(code) ? 3 : 2) : 5;
   process.stderr.write(JSON.stringify({ error: { code, message: error instanceof Error ? error.message : "Unexpected failure." } }) + "\n");

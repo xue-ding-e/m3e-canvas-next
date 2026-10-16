@@ -1,0 +1,7 @@
+Offline rendering font bundle
+
+Roboto, Roboto Flex, Roboto Serif and Noto Sans SC are distributed under their attached SIL Open Font License 1.1 notices, including copyright lines. Fontsource npm packages are pinned in manifest.json and tarball SHA-512 was checked.
+
+Material Symbols Rounded is an unmodified font from Google material-design-icons commit 49d4db35df873165d6bd6ba09b063c7dafbac2f4, under the attached Apache License 2.0. The upstream README identifies Google as its author; see source URL in manifest.json. The conflicting third-party Fontsource Material Symbols package was NOT included.
+
+Only CSS aliases, local URLs and font-display declarations were changed; font binaries were not modified. No endorsement by font authors is implied.
