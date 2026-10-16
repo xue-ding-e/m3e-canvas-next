@@ -72,7 +72,7 @@ describe("MCP stdio wire protocol", () => {
     transport.stderr?.on("data", (chunk) => { stderr += chunk; });
     try {
       await client.connect(transport);
-      expect((await client.listTools()).tools).toHaveLength(3);
+      expect((await client.listTools()).tools).toHaveLength(7);
       const response = await client.callTool({ name: "generate_prompt", arguments: { doc: { ...doc, promptEdit: "" } } });
       expect(response.isError).not.toBe(true);
       expect(response.structuredContent).toMatchObject({ prompt: "", mode: "effective" });
@@ -82,13 +82,84 @@ describe("MCP stdio wire protocol", () => {
       await client.close();
     }
   });
+  it("edits a design through the official SDK using discovered schemas and revision protection", async () => {
+    const client = new Client({ name: "design-sdk-test", version: "1.0.0" });
+    const transport = new StdioClientTransport({ command: process.execPath, args: [resolve("dist-headless/cli/mcp.js")], stderr: "pipe" });
+    const call = async (name: string, args: Record<string, unknown>) => {
+      const response = await client.callTool({ name, arguments: args });
+      expect(response.isError).not.toBe(true);
+      return response.structuredContent as Record<string, any>;
+    };
+    try {
+      await client.connect(transport);
+      const catalog = await call("design_catalog", { lang: "en" });
+      expect(catalog.supported).toContain("item.update");
+      expect(catalog.schemas.transaction.properties.version.const).toBe(1);
+      expect(catalog.unsupported.length).toBeGreaterThan(0);
+      const created = await call("create_project", { options: { title: "MCP design" } });
+      const original = JSON.stringify(created.doc);
+      const inspected = await call("inspect_project", { doc: created.doc });
+      expect(inspected.revision).toBe(created.revision);
+      const edited = await call("apply_operations", { doc: created.doc, transaction: {
+        version: 1, expectedRevision: inspected.revision, operations: [
+          { op: "frame.add", frame: { id: "home", name: "Home", x: 0, y: 0 } },
+          { op: "group.add", group: { id: "content", x: 30, y: 60, axis: "y", items: [{ id: "save", kind: "button", label: "Save" }] } },
+          { op: "item.update", id: "save", set: { label: "Continue" } },
+        ],
+      } });
+      expect(edited.doc.groups[0].items[0].label).toBe("Continue");
+      expect(edited.changes).toHaveLength(3);
+      expect(edited.previousRevision).toBe(created.revision);
+      expect(edited.revision).not.toBe(created.revision);
+      expect(JSON.stringify(created.doc)).toBe(original);
+      const final = await call("inspect_project", { doc: edited.doc });
+      expect(final.counts).toEqual({ frames: 1, groups: 1, items: 1 });
+      expect(final.revision).toBe(edited.revision);
+      const stale = await client.callTool({ name: "apply_operations", arguments: { doc: edited.doc, transaction: { version: 1, expectedRevision: created.revision, operations: [{ op: "project.update", set: { title: "stale edit" } }] } } });
+      expect(stale.isError).toBe(true);
+    } finally {
+      await client.close();
+    }
+  });
+
+  it("rejects invalid editing batches atomically, guards manual prompts and exposes no I/O tool", async () => {
+    const c = connection();
+    await c.initialize();
+    const call = (transaction: unknown, value: unknown = doc) => c.request("tools/call", { name: "apply_operations", arguments: { doc: value, transaction } });
+    for (const transaction of [
+      { version: 2, operations: [{ op: "prompt.clear" }] },
+      { version: 1, operations: [] },
+      { version: 1, operations: Array.from({ length: 201 }, () => ({ op: "prompt.clear" })) },
+      { version: 1, operations: [{ op: "project.update", set: { title: "partial" } }, { op: "item.remove", id: "absent" }] },
+      { version: 1, operations: [{ op: "read_file", path: "/etc/passwd" }] },
+      { version: 1, operations: [{ op: "project.update", set: { title: "edit" } }], outputPath: "/tmp/must-not-write" },
+    ]) {
+      const response = await call(transaction);
+      expect(response.result?.isError === true || response.error?.code === -32602).toBe(true);
+      expect(response.result?.structuredContent?.doc).toBeUndefined();
+    }
+    const manual = { ...doc, promptEdit: "Custom manual prompt" };
+    const operations = [{ op: "project.update", set: { title: "Changed" } }];
+    expect((await call({ version: 1, operations }, manual)).result.isError).toBe(true);
+    const preserved = decoded(await call({ version: 1, operations, promptEditPolicy: "preserve" }, manual));
+    expect(preserved.doc.promptEdit).toBe(manual.promptEdit);
+    expect(preserved.warnings.length).toBeGreaterThan(0);
+    const cleared = decoded(await call({ version: 1, operations, promptEditPolicy: "clear" }, manual));
+    expect(cleared.doc.promptEdit).toBeUndefined();
+    expect(manual.title).toBe("Test");
+    const inspected = decoded(await c.request("tools/call", { name: "inspect_project", arguments: { doc } }));
+    expect(inspected.doc.title).toBe("Test");
+    expect((await c.request("ping")).result).toEqual({});
+    expect(c.stderr()).toBe("");
+  });
+
   it("initializes, lists exactly the safe tools, calls them, and emits only JSON-RPC on stdout", async () => {
     const c = connection();
     await c.initialize();
     const list = await c.request("tools/list");
-    expect(list.result.tools.map((tool: any) => tool.name).sort()).toEqual(["create_share_link", "generate_prompt", "validate_project"]);
+    expect(list.result.tools.map((tool: any) => tool.name).sort()).toEqual(["apply_operations", "create_project", "create_share_link", "design_catalog", "generate_prompt", "inspect_project", "validate_project"]);
     for (const tool of list.result.tools) {
-      expect(tool.inputSchema.required).toContain("doc");
+      if (!["create_project", "design_catalog"].includes(tool.name)) expect(tool.inputSchema.required).toContain("doc");
       expect(tool.annotations.readOnlyHint).toBe(true);
       expect(tool.annotations.openWorldHint).toBe(false);
     }

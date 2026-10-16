@@ -3,6 +3,7 @@ import { Transform, type TransformCallback } from "node:stream";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { applyOperations, createOptionsSchema, createProject, designCatalog, inspectProject, projectRevision, transactionSchema } from "../lib/design";
 import { HeadlessError, normalizeProject, projectPrompt, projectShareLink } from "../lib/headless";
 
 /** Limit the wire input before the SDK buffers or parses a complete JSON line. */
@@ -31,6 +32,12 @@ export class BoundedMcpInput extends Transform {
 
 export const AGENT_GUIDE = `M3E Canvas headless tools accept an explicit exported project JSON object in doc.
 They do not access browser tabs, browser storage, files, network endpoints, or model credentials.
+create_project creates an empty project; design_catalog lists schemas, supported operations and limitations.
+inspect_project returns the document revision, IDs and estimated geometry.
+apply_operations accepts an explicit doc and version=1 transaction, applies atomically to a copy, and returns a new doc.
+Use expectedRevision from inspect_project and explicit IDs. Saved promptEdit makes design edits fail by default;
+choose clear/preserve deliberately or end the batch with prompt.set/prompt.clear. Nothing is saved automatically.
+Structured document editing is not complete UI behavior: see catalog.unsupported; no preview interaction or screenshot tool.
 validate_project returns the normalized project and warns when normalization changes it.
 generate_prompt defaults to mode=effective and lang=en. Effective mode preserves a saved promptEdit;
 use mode=generated explicitly to regenerate. Choose frameId only with mode=generated when asking for one frame.
@@ -55,6 +62,25 @@ async function invoke(work: () => Record<string, unknown> | Promise<Record<strin
 /** No tool retains the document after its call, and none performs external I/O. */
 export function createMcpServer() {
   const server = new McpServer({ name: "m3e-canvas", version: "0.1.0" });
+  server.registerTool("create_project", {
+    description: "Create an empty M3E Canvas project JSON from explicit settings. Returns a document and revision; does not save or open it.",
+    inputSchema: z.object({ options: createOptionsSchema.default({}) }).strict(), annotations,
+  }, ({ options }) => invoke(() => {
+    const doc = createProject(options);
+    return { doc, revision: projectRevision(doc) };
+  }));
+  server.registerTool("inspect_project", {
+    description: "Inspect explicit project JSON: validated document, stable revision, IDs, counts and estimated geometry. Does not inspect browser state.",
+    inputSchema: z.object({ doc: documentSchema }).strict(), annotations,
+  }, ({ doc }) => invoke(() => inspectProject(doc)));
+  server.registerTool("design_catalog", {
+    description: "List component defaults, versioned operation schemas, supported edits, limits and unsupported UI behavior. Defaults to English.",
+    inputSchema: z.object({ lang: z.enum(["en", "ja", "zh", "ko"]).default("en") }).strict(), annotations,
+  }, ({ lang }) => invoke(() => designCatalog(lang)));
+  server.registerTool("apply_operations", {
+    description: "Apply a version=1 operation batch atomically to an explicit document copy. Returns a new document/revision, changes and warnings; never saves. Use expectedRevision for stale-input protection; promptEditPolicy defaults to reject stale manual prompts.",
+    inputSchema: z.object({ doc: documentSchema, transaction: transactionSchema }).strict(), annotations,
+  }, ({ doc, transaction }) => invoke(() => applyOperations(doc, transaction)));
   server.registerTool("validate_project", {
     description: "Validate and normalize an explicitly supplied M3E Canvas project; return the normalized document and migration warning.",
     inputSchema: z.object({ doc: documentSchema }).strict(), annotations,
