@@ -416,3 +416,18 @@ input.m3-number {
   }
 }
 
+
+/* Optional browser-agent controls remain usable without a WebMCP host. */
+.m3e-browser-tools { position: fixed; right: 12px; bottom: 12px; z-index: 80; width: min(380px, calc(100vw - 24px)); max-height: 70dvh; overflow: auto; border: 1px solid #777; border-radius: 12px; padding: 10px; background: #faf8ff; color: #242128; font: 13px/1.5 system-ui, sans-serif; box-shadow: 0 3px 16px #0002; }
+.m3e-browser-tools:not([open]) { width: auto; }
+.m3e-browser-tools summary { cursor: pointer; font-weight: 600; }
+.m3e-browser-tools p { margin: 8px 0; }
+.m3e-browser-tools label { display: block; margin-top: 10px; }
+.m3e-browser-tools textarea { width: 100%; min-height: 100px; padding: 6px; border: 1px solid #888; border-radius: 4px; font: 12px monospace; background: white; color: #242128; }
+.m3e-browser-tools button, .m3e-candidate-dialog button { padding: 7px 10px; margin-top: 6px; border: 1px solid #777; border-radius: 8px; cursor: pointer; background: #eee7fa; color: #242128; }
+.m3e-browser-tools button:disabled, .m3e-candidate-dialog button:disabled { opacity: .5; cursor: not-allowed; }
+.m3e-candidate-dialog { margin: auto; padding: 24px; width: min(720px, calc(100vw - 24px)); max-height: 85dvh; overflow: auto; border: 1px solid #777; border-radius: 16px; background: #faf8ff; color: #242128; font: 14px/1.5 system-ui, sans-serif; }
+.m3e-candidate-dialog::backdrop { background: #0008; }
+.m3e-candidate-dialog h2 { font-size: 21px; font-weight: 600; }
+.m3e-candidate-dialog p { margin: 10px 0; }
+.m3e-candidate-dialog pre { max-height: 40dvh; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; background: white; padding: 12px; border: 1px solid #bbb; }

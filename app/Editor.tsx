@@ -116,6 +116,7 @@ import { LayersPanel } from "@/components/Layers";
 import { FrameSizePicker, Inspector } from "@/components/Inspector";
 import { FrameInspector } from "@/components/FramePanel";
 import { Preview } from "@/components/Preview";
+import { BrowserTools } from "@/components/BrowserTools";
 import { Logo } from "@/components/Logo";
 import { PartsPalette } from "@/components/PartsPalette";
 import { PromptPanel } from "@/components/PromptPanel";
@@ -3847,6 +3848,7 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
   return (
     <LangContext.Provider value={lang}>
     <ThemeContext.Provider value={theme}>
+      <BrowserTools doc={doc} widths={widths} lang={lang} editable={editAccess === "editable" && previewId === null && !pendingImport && !confirmClear && !shareOpen && !draftBusy && !aiBusy && !promptCoverUp} apply={importDoc} />
       <div
         className={`app-root${revealing ? " m3e-reveal" : ""}${widthDragId || sizeEditId ? " m3-size-now" : ""}`}
         /* the preview sits outside this tree and owns the keyboard while it is up */
