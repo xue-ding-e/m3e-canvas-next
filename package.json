@@ -10,7 +10,10 @@
     "build": "next build",
     "start": "npx serve out",
     "typecheck": "tsc --noEmit -p .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:headless": "tsc -p tsconfig.headless.json",
+    "cli": "node dist-headless/cli/main.js",
+    "pretest": "npm run build:headless"
   },
   "dependencies": {
     "html-to-image": "^1.11.13",

@@ -47,3 +47,6 @@ next-env.d.ts
 
 # promo video project (kept private)
 /promo
+
+# headless CLI and MCP build output
+/dist-headless/
