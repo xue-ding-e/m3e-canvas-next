@@ -2364,31 +2364,31 @@ export type Doc = {
   theme?: Theme;
 };
 
-export const defaultTabs = (): NavTab[] => NAV_TABS[getLang()].map((t) => ({ ...t }));
+export const defaultTabs = (lang: Lang = getLang()): NavTab[] => NAV_TABS[lang].map((t) => ({ ...t }));
 
 const TOOLBAR_ICONS = ["format_bold", "format_italic", "format_underlined", "attach_file", "format_color_text", "more_vert"];
 
 /** the entries a kind starts with, also used to fill in rows the author adds */
-export function defaultTabsFor(kind: Kind): NavTab[] {
+export function defaultTabsFor(kind: Kind, lang: Lang = getLang()): NavTab[] {
   switch (kind) {
     case "tabs":
-      return TAB_LABELS[getLang()].map((label) => ({ icon: "", label }));
+      return TAB_LABELS[lang].map((label) => ({ icon: "", label }));
     case "select":
-      return SELECT_OPTIONS[getLang()].map((label) => ({ icon: "", label }));
+      return SELECT_OPTIONS[lang].map((label) => ({ icon: "", label }));
     case "fabMenu":
-      return FAB_MENU_TABS[getLang()].map((t) => ({ ...t }));
+      return FAB_MENU_TABS[lang].map((t) => ({ ...t }));
     case "splitButton":
-      return SPLIT_MENU_TABS[getLang()].map((t) => ({ ...t }));
+      return SPLIT_MENU_TABS[lang].map((t) => ({ ...t }));
     case "toolbar":
       return TOOLBAR_ICONS.map((icon) => ({ icon, label: "" }));
     default:
-      return defaultTabs();
+      return defaultTabs(lang);
   }
 }
 
-export function makeItem(kind: Kind): Item {
+export function makeItem(kind: Kind, lang: Lang = getLang()): Item {
   const s = KIND_SPEC[kind];
-  const text = KIND_TEXT[getLang()][kind];
+  const text = KIND_TEXT[lang][kind];
   const it: Item = {
     id: uid(),
     kind,
@@ -2420,16 +2420,16 @@ export function makeItem(kind: Kind): Item {
   if (kind === "datePicker") it.layout = "modal";
   if (kind === "timePicker") it.layout = "dial";
   if (kind === "bottomNav") {
-    it.tabs = defaultTabs();
+    it.tabs = defaultTabs(lang);
     it.radiusTop = 0;
     it.radiusBottom = 0;
   }
   if (kind === "navRail") {
-    it.tabs = defaultTabs();
+    it.tabs = defaultTabs(lang);
     it.railExpanded = false;
   }
-  if (kind === "tabs" || kind === "fabMenu" || kind === "select" || kind === "splitButton") it.tabs = defaultTabsFor(kind);
-  if (kind === "toolbar") it.tabs = defaultTabsFor(kind).slice(0, 4);
+  if (kind === "tabs" || kind === "fabMenu" || kind === "select" || kind === "splitButton") it.tabs = defaultTabsFor(kind, lang);
+  if (kind === "toolbar") it.tabs = defaultTabsFor(kind, lang).slice(0, 4);
   return it;
 }
 
