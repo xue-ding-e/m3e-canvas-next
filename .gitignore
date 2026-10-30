@@ -50,3 +50,7 @@ next-env.d.ts
 
 # headless CLI and MCP build output
 /dist-headless/
+
+# Static delivery archives and packaging-test bytecode
+/dist-static/
+/scripts/__pycache__/

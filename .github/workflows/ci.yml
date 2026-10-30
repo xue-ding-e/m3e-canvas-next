@@ -17,15 +17,35 @@ jobs:
   check:
     name: typecheck and build
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: npm
+      - name: Test static packaging without application credentials
+        run: python3 scripts/test-package-static.py
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
-      - run: npm run build
+      - name: Build portable static site
+        run: npm run build
         env:
-          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+          # The downloadable archive is served at the root of a local HTTP server.
+          # Pages keeps its separate sub-path build and publication approval gate.
+          NEXT_PUBLIC_BASE_PATH: ""
+          NEXT_PUBLIC_SITE_ORIGIN: http://localhost:8080
+      - name: Package exact tested source revision
+        run: python3 scripts/package-static.py --revision "$GITHUB_SHA"
+      - name: Keep verified static archive
+        if: github.repository == 'xue-ding-e/m3e-canvas-next' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: m3e-canvas-next-static-${{ github.sha }}
+          path: dist-static/*
+          if-no-files-found: error
+          retention-days: 30

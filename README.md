@@ -126,7 +126,21 @@ npm run dev        # http://localhost:3000
 npm run build      # static export to ./out
 ```
 
-The app is a static Next.js export. To host it under a sub-path (for example a GitHub Pages project site), set `NEXT_PUBLIC_BASE_PATH=/your-repo` at build time. `.github/workflows/deploy.yml` does this and publishes `out/` to GitHub Pages on every push to `main`.
+The app is a static Next.js export. To host it under a sub-path (for example a GitHub Pages project site), set `NEXT_PUBLIC_BASE_PATH=/your-repo` at build time. `.github/workflows/deploy.yml` builds that sub-path variant after successful `main` push CI. It publishes only after the exact output passes Chromium acceptance and the source SHA is still current `main`; manual dispatch runs the source checks too. The configured Next target is `https://xue-ding-e.github.io/m3e-canvas-next/`. A configured workflow is not evidence that its first deployment has succeeded; check the [Pages workflow](https://github.com/xue-ding-e/m3e-canvas-next/actions/workflows/deploy.yml).
+
+### Next prebuilt static archive
+
+The Next CI runs automatically on pushes to `main` and on pull requests. After typechecking, tests and the static build pass, a `main` push uploads a SHA-labelled static archive to that [Actions run](https://github.com/xue-ding-e/m3e-canvas-next/actions/workflows/ci.yml). Downloading Actions artifacts requires a GitHub login; they expire after 30 days and are not a permanent public release channel.
+
+Extract the Actions artifact, verify the enclosed `.zip.sha256`, then extract the inner `m3e-canvas-next-<sha>-static.zip`. No Node.js build is needed. With Python 3 installed, run this inside the extracted site directory:
+
+```bash
+python3 -m http.server 8080 --bind 127.0.0.1
+```
+
+On Windows, use `py -m http.server 8080 --bind 127.0.0.1`. Open `http://localhost:8080/`; do not open `index.html` through `file://`. Keep the server running while using the app. The archive includes `LICENSE`, `NOTICE` and `build-info.json` with the exact source commit. It is built for the URL root, not a hosting sub-path.
+
+This is a static build delivery, not evidence of native application or browser-install acceptance. The manifest supports a standalone launch, but offline operation is not guaranteed. The upstream app link elsewhere in this README is not the Next deployment. The owner-approved Next Pages target is separate from that upstream site. The Pages workflow tests a synthetic Chromium profile before publication, without AI keys or external model calls. This does not test every editor function or guarantee offline support.
 
 ## <img src="docs/readme/ui/icon-contribute.png" width="32" height="32" align="absmiddle" alt="" /> Contributing
 

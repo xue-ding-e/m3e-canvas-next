@@ -1,13 +1,16 @@
 name: Deploy to GitHub Pages
 
 on:
-  # Dispatch only after real-browser acceptance and explicit publication approval.
+  # The owner approved this exact Next site and automatic main deployment.
+  # Every publication still requires source CI and real Chromium acceptance.
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -15,30 +18,82 @@ concurrency:
 
 jobs:
   build:
+    if: >-
+      github.repository == 'xue-ding-e/m3e-canvas-next' &&
+      ((github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository))
     runs-on: ubuntu-latest
+    timeout-minutes: 35
+    outputs:
+      source_sha: ${{ steps.source.outputs.sha }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+      - name: Record exact source
+        id: source
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Manual dispatch must pass the same source checks, not bypass CI.
+      - if: github.event_name == 'workflow_dispatch'
+        run: npm run typecheck && npm test
       - name: Build static site
         # Project sites live under /<repo>; user sites (<user>.github.io) use "".
         run: npm run build
         env:
-          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+          NEXT_PUBLIC_BASE_PATH: /m3e-canvas-next
+          NEXT_PUBLIC_SITE_ORIGIN: https://xue-ding-e.github.io
+      - name: Verify unchanged tested source
+        run: git diff --exit-code --quiet HEAD --
+      - name: Install isolated browser test tooling
+        run: |
+          npm install --prefix "$RUNNER_TEMP/m3e-browser" --no-save --package-lock=false playwright@1.64.1
+          "$RUNNER_TEMP/m3e-browser/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Accept exact static output in a real browser
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/m3e-browser/node_modules/playwright
+          ACCEPTANCE_URL: http://127.0.0.1:8080/m3e-canvas-next/
+        run: |
+          mkdir -p "$RUNNER_TEMP/m3e-site"
+          cp -a out "$RUNNER_TEMP/m3e-site/m3e-canvas-next"
+          python3 -m http.server 8080 --bind 127.0.0.1 --directory "$RUNNER_TEMP/m3e-site" &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent "$ACCEPTANCE_URL" >/dev/null; then break; fi
+            sleep 1
+          done
+          timeout 180s node scripts/browser-acceptance.cjs
       - run: touch out/.nojekyll
-      - uses: actions/upload-pages-artifact@v5
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           path: out
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Refuse to publish a superseded main revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ needs.build.outputs.source_sha }}
+        run: |
+          current=$(gh api repos/xue-ding-e/m3e-canvas-next/git/ref/heads/main --jq .object.sha)
+          test "$current" = "$SOURCE_SHA"
       - id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
