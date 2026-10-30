@@ -8,27 +8,45 @@ on:
     types: [completed]
     branches: [main]
   workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact full source SHA to validate (must match the selected ref)
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: pages
+  # Candidate verification must never cancel a main publication.
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
     if: >-
       github.repository == 'xue-ding-e/m3e-canvas-next' &&
-      ((github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      ((github.event_name == 'workflow_dispatch' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/maintenance/m3e-install-delivery-20261030')) ||
       (github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
       github.event.workflow_run.head_repository.full_name == github.repository))
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 15
     outputs:
       source_sha: ${{ steps.source.outputs.sha }}
+    env:
+      NODE_OPTIONS: --max-old-space-size=1536
+      NEXT_TELEMETRY_DISABLED: "1"
     steps:
+      - name: Validate exact manual source before checkout
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$EXPECTED_SHA" = "$GITHUB_SHA"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
@@ -40,13 +58,17 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - run: timeout 300s npm ci --no-audit --no-fund
       # Manual dispatch must pass the same source checks, not bypass CI.
       - if: github.event_name == 'workflow_dispatch'
-        run: npm run typecheck && npm test
+        run: |
+          python3 scripts/test-package-static.py
+          timeout 120s npm run typecheck
+          timeout 120s npm run build:headless
+          timeout 180s ./node_modules/.bin/vitest run --maxWorkers=1 --no-file-parallelism
       - name: Build static site
         # Project sites live under /<repo>; user sites (<user>.github.io) use "".
-        run: npm run build
+        run: timeout 300s npm run build
         env:
           NEXT_PUBLIC_BASE_PATH: /m3e-canvas-next
           NEXT_PUBLIC_SITE_ORIGIN: https://xue-ding-e.github.io
@@ -54,8 +76,8 @@ jobs:
         run: git diff --exit-code --quiet HEAD --
       - name: Install isolated browser test tooling
         run: |
-          npm install --prefix "$RUNNER_TEMP/m3e-browser" --no-save --package-lock=false playwright@1.64.1
-          "$RUNNER_TEMP/m3e-browser/node_modules/.bin/playwright" install --with-deps chromium
+          timeout 120s npm install --prefix "$RUNNER_TEMP/m3e-browser" --no-save --package-lock=false playwright@1.64.1
+          timeout 120s "$RUNNER_TEMP/m3e-browser/node_modules/.bin/playwright" install --with-deps chromium
       - name: Accept exact static output in a real browser
         env:
           PLAYWRIGHT_MODULE: ${{ runner.temp }}/m3e-browser/node_modules/playwright
@@ -71,12 +93,15 @@ jobs:
             sleep 1
           done
           timeout 180s node scripts/browser-acceptance.cjs
-      - run: touch out/.nojekyll
-      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
+      - if: github.ref == 'refs/heads/main'
+        run: touch out/.nojekyll
+      - if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           path: out
 
   deploy:
+    if: github.ref == 'refs/heads/main' && needs.build.result == 'success'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
